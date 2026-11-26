@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorials — Software Testing & AI | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <h1>Software Testing & AI Tutorials</h1>
+      <p>
+        Practical, code-first guides on modern test automation architecture, accessibility engineering, and systematic evaluation of machine learning models.
+      </p>
+    </div>
+
+    <!-- Track 1: Software Testing -->
+    <section>
+      <h2>Software Testing & Automation Engineering</h2>
+      <div class="grid-2">
+        <article class="card">
+          <span class="category-pill cat-testing">Software Testing • Playwright</span>
+          <h3>Structuring Maintainable Page Objects with SOLID Principles</h3>
+          <span class="meta">Guide • UI & API Automation Architecture</span>
+          <p>How to separate locators, business workflows, and test assertions so UI changes do not break dozens of regression tests.</p>
+          <ol class="tutorial-steps">
+            <li>Keep page classes focused strictly on element interactions—avoid placing assertions inside Page Objects.</li>
+            <li>Inject API helpers for test data setup instead of clicking through slow UI preconditions.</li>
+            <li>Run suites in parallel inside CI/CD pipelines with trace-on-failure enabled.</li>
+          </ol>
+          <pre><code>// C# Playwright Page Object Pattern
+public class LoginPage(IPage page) {
+    private ILocator EmailInput => page.GetByLabel("Email");
+    private ILocator SubmitBtn  => page.GetByRole(AriaRole.Button, new() { Name = "Sign in" });
+
+    public async Task LoginAsync(string email) {
+        await EmailInput.FillAsync(email);
+        await SubmitBtn.ClickAsync();
+    }
+}</code></pre>
+        </article>
+
+        <article class="card">
+          <span class="category-pill cat-testing">Software Testing • Accessibility</span>
+          <h3>Automating WCAG AA/AAA Checks in CI/CD</h3>
+          <span class="meta">Guide • Inclusive Quality Engineering</span>
+          <p>Combine automated DOM scans with screen-reader verification (NVDA) to catch accessibility defects before release.</p>
+          <ol class="tutorial-steps">
+            <li>Integrate axe-core checks into your Playwright or Selenium regression suite.</li>
+            <li>Validate keyboard-only navigation, focus traps, and ARIA labels on dynamic modals.</li>
+            <li>Verify color contrast ratios and screen-reader announcements on critical user journeys.</li>
+          </ol>
+          <pre><code># Python Playwright + axe-core quick check
+from axe_playwright_python.sync_playwright import Axe
+
+results = Axe().run(page)
+assert results.violations_count == 0, results.generate_report()</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <!-- Track 2: AI & ML Model Testing -->
+    <section>
+      <h2>AI/ML Engineering & Responsible-AI Testing</h2>
+      <div class="grid-2">
+        <article class="card">
+          <span class="category-pill cat-ai">AI Testing • PyTest & PyTorch</span>
+          <h3>Writing Automated Behavioural & Drift Tests for ML Models</h3>
+          <span class="meta">Guide • Testing Beyond Accuracy</span>
+          <p>Why high aggregate validation accuracy can still hide critical failures—and how to write deterministic PyTest checks for neural networks.</p>
+          <ol class="tutorial-steps">
+            <li><strong>Invariance Tests:</strong> Verify predictions remain stable under minor noise or lighting shifts.</li>
+            <li><strong>Slice Evaluation:</strong> Measure precision/recall across underrepresented data subgroups.</li>
+            <li><strong>Inference Latency Gate:</strong> Fail the build if batch inference exceeds production SLA thresholds.</li>
+          </ol>
+          <pre><code>import torch, pytest
+
+def test_model_output_shape_and_bounds(trained_model):
+    sample = torch.randn(4, 3, 224, 224)
+    probs = torch.softmax(trained_model(sample), dim=1)
+    assert probs.shape == (4, 2)
+    assert torch.allclose(probs.sum(dim=1), torch.ones(4), atol=1e-5)</code></pre>
+        </article>
+
+        <article class="card">
+          <span class="category-pill cat-ai">Responsible AI • Robustness</span>
+          <h3>Evaluating Adversarial Robustness & Explainability</h3>
+          <span class="meta">Guide • Trustworthy Deep Learning</span>
+          <p>A checklist for stress-testing deep learning classifiers and segmentation models against perturbations and spurious correlations.</p>
+          <ol class="tutorial-steps">
+            <li>Generate small-epsilon FGSM/PGD perturbations to measure worst-case confidence drops.</li>
+            <li>Use saliency or Grad-CAM overlays to confirm the model focuses on relevant regions rather than background artifacts.</li>
+            <li>Log all robustness metrics per run in MLflow for reproducible model governance.</li>
+          </ol>
+          <pre><code># Log robustness metrics in MLflow
+import mlflow
+
+with mlflow.start_run():
+    mlflow.log_metric("clean_dice_score", 0.91)
+    mlflow.log_metric("perturbed_dice_score", 0.84)</code></pre>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
