@@ -212,3 +212,63 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap
+/* Profile Photo Layout in Hero */
+.hero-flex {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.profile-photo {
+  width: 145px;
+  height: 145px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-light);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
+}
+
+@media (max-width: 680px) {
+  .hero-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  .badge-row,
+  .cta-group {
+    justify-content: center;
+  }
+}
+
+/* Tutorial Cards & Category Labels */
+.category-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 0.6rem;
+}
+
+.cat-testing {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.cat-ai {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.tutorial-steps {
+  margin-top: 0.75rem;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-size: 0.93rem;
+}
+
+.tutorial-steps li {
+  margin-bottom: 0.35rem;
+}
