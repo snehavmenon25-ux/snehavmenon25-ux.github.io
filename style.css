@@ -211,7 +211,40 @@ h2 {
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
-  gap
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.tag {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+/* Code / Snippet Block */
+pre {
+  background: var(--code-bg);
+  color: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  text-align: center;
+  padding: 2rem 1.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 /* Profile Photo Layout in Hero */
 .hero-flex {
   display: flex;
