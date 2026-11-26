@@ -1,10 +1,8 @@
 // Add any new pages here in the future—every page will automatically show the link!
 const NAV_ITEMS = [
   { label: "Overview", href: "index.html" },
+  { label: "Tutorials", href: "tutorials.html" },
   { label: "Code & Case Studies", href: "projects.html" }
-  // Example for future pages:
-  // { label: "Research Notes", href: "research.html" },
-  // { label: "Code Snippets", href: "snippets.html" }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
