@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML &amp; Deep Learning Core Concepts Explained Simply | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Complete Beginner Guide</span>
+        <span class="badge">Plain-English Analogies + PyTorch</span>
+        <span class="badge">Core ML &amp; Deep Learning</span>
+      </div>
+      <h1>Machine Learning &amp; Deep Learning Fundamentals Explained Simply</h1>
+      <p class="subtitle">Understand Dataset Splitting, Training vs. Testing, Loss Functions, Backpropagation, Optimizers, and Overfitting—with real-world analogies and minimal, runnable Python examples.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. Dataset Splitting, Training &amp; Testing</h2>
+      <div class="card">
+        <p><strong>The Exam Analogy:</strong> Imagine studying for a certification exam. If the teacher gives you the exact 50 exam questions beforehand and you memorize the answers, getting 100% does not prove you understand the subject. To measure real learning, you need unseen questions on exam day.</p>
+        <ul>
+          <li><strong>Training Set (~70–80% of data):</strong> The practice textbook. The model looks at both inputs and correct answers repeatedly to adjust its internal parameters.</li>
+          <li><strong>Validation Set (~10–15% of data):</strong> Mock practice exams taken during studying. Used to tune settings (like learning rate) and spot overfitting early without touching the final exam.</li>
+          <li><strong>Testing Set (~10–15% of data):</strong> The final unseen exam held locked away until training finishes, giving an honest measurement of real-world performance.</li>
+        </ul>
+        <pre><code>from sklearn.model_selection import train_test_split
+
+# X = input features, y = true labels (1000 examples)
+# Step 1: Hold out 15% for final unseen Testing
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.15, random_state=42)
+
+# Step 2: Split remaining 85% into Training (70%) and Validation (15%)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.176, random_state=42)</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. Loss Function: Measuring "How Wrong" the Model Is</h2>
+      <div class="card">
+        <p><strong>Role:</strong> A Loss Function compares the model's prediction against the true answer and outputs a single penalty number (the <em>loss</em>). A high loss means a big mistake; a loss near zero means an accurate prediction.</p>
+        <ul>
+          <li><strong>Mean Squared Error (MSE) — For Numbers (Regression):</strong> Used when predicting continuous numbers like house prices or response latency in milliseconds. Example: If true latency is <code>200 ms</code> and the model predicts <code>230 ms</code>, squared error is <code>(230 - 200)&sup2; = 900</code>.</li>
+          <li><strong>Binary Cross-Entropy (BCE) — For Yes/No Decisions:</strong> Used for two-class problems like <em>"Is this test flaky? (Yes/No)"</em> or <em>"Spam vs. Not Spam"</em>. It heavily penalizes confident wrong guesses.</li>
+          <li><strong>Cross-Entropy Loss — For Multiple Categories:</strong> Used when choosing one class among many (e.g., classifying a bug report as <em>UI</em>, <em>Backend</em>, <em>Database</em>, or <em>Network</em>).</li>
+        </ul>
+        <pre><code>import torch
+import torch.nn as nn
+
+# Example: Predicting whether a build will fail (1 = Fail, 0 = Pass)
+loss_fn = nn.BCEWithLogitsLoss()
+
+raw_prediction = torch.tensor([2.5])   # Model strongly predicts Fail (~92% probability)
+actual_outcome = torch.tensor([1.0])   # Build actually failed
+
+loss = loss_fn(raw_prediction, actual_outcome)
+print("Loss penalty:", round(loss.item(), 4))  # Small penalty: 0.0789</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Backpropagation: Finding Who Caused the Error</h2>
+      <div class="card">
+        <p><strong>Role:</strong> A neural network contains thousands or millions of internal weights (knobs). Once the Loss Function tells us the total error, <strong>Backpropagation</strong> works backward from the output layer to the input layer (using the calculus chain rule) to calculate how much each individual weight contributed to that mistake.</p>
+        <p style="margin-top: 0.75rem;"><strong>Simple Analogy:</strong> If a relay race team finishes 5 seconds behind target time, backpropagation checks each runner's split to determine who slowed down and by how much—giving every weight a <em>gradient</em> (direction and steepness of error).</p>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Optimizers: Turning the Knobs to Reduce Error</h2>
+      <div class="card">
+        <p><strong>Role:</strong> Backpropagation only <em>calculates</em> the error gradients; the <strong>Optimizer</strong> is the algorithm that actually <em>updates</em> the model's weights to lower the loss on the next step.</p>
+        <ul>
+          <li><strong>Learning Rate (<code>lr</code>):</strong> Controls step size. Too large and the model overshoots the best answer; too small and training crawls slowly.</li>
+          <li><strong>SGD (Stochastic Gradient Descent):</strong> Updates weights directly in the downhill direction of the gradient—simple and reliable.</li>
+          <li><strong>Adam / AdamW (Most Popular Default):</strong> Automatically adapts the step size for each parameter using momentum and past gradient history, converging quickly on most tabular, vision, and NLP tasks.</li>
+        </ul>
+        <pre><code># How Loss, Backpropagation, and Optimizer work together in 4 lines:
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+optimizer.zero_grad()          # 1. Reset gradients from previous step
+loss = loss_fn(preds, targets) # 2. Loss Function measures error
+loss.backward()                # 3. Backpropagation computes gradients for every weight
+optimizer.step()               # 4. Optimizer updates weights to reduce future loss</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Overfitting vs. Underfitting (and How to Fix Both)</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Underfitting (Too Simple):</strong> The model fails to learn basic patterns. Both Training Loss and Validation Loss stay high (like trying to fit a straight line through curved data). <em>Fix:</em> Train longer, add informative features, or use a slightly larger model.</li>
+          <li><strong>Overfitting (Memorizing Noise):</strong> The model memorizes the training examples—including random quirks—so Training Accuracy reaches 99%, while Validation/Test Accuracy drops sharply on unseen data.</li>
+        </ul>
+        <p style="margin-top: 0.75rem;"><strong>Four Practical Ways to Prevent Overfitting:</strong></p>
+        <ol class="tutorial-steps">
+          <li><strong>Dropout (<code>nn.Dropout(0.2)</code>):</strong> Randomly turns off 20% of neurons during each training step so the network cannot rely on memorizing single pathways.</li>
+          <li><strong>Early Stopping:</strong> Monitor Validation Loss after every epoch and stop training automatically when validation error stops improving.</li>
+          <li><strong>Weight Decay (L2 Regularization):</strong> Penalizes overly large weights in <code>AdamW(..., weight_decay=1e-2)</code> to keep decision boundaries smooth.</li>
+          <li><strong>More Diverse Data / Data Augmentation:</strong> Add varied examples (or flip/crop images) so the model learns true concepts rather than surface details.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
