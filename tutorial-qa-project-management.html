@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Software &amp; QA Project Management Guide | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Delivery &amp; Team Leadership</span>
+        <span class="badge">Agile / Scrum &amp; Hybrid</span>
+        <span class="badge">Cross-Functional Governance</span>
+      </div>
+      <h1>End-to-End Guide: Software &amp; QA Project Management</h1>
+      <p class="subtitle">A practical handbook for leading cross-functional engineering, design, and QA teams—covering Work Breakdown Structures (WBS), RACI matrices, dependency tracking, risk logs, and sprint governance.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. Project Initiation: Scope, Deliverables &amp; WBS</h2>
+      <div class="card">
+        <p>Successful software delivery starts with translating high-level business goals into a <strong>Work Breakdown Structure (WBS)</strong>—decomposing a project into concrete, trackable deliverables with clear owners and dependencies:</p>
+        <pre><code>PROJECT WBS — Customer Portal Modernization (8-Week Release)
+
+1.0 Discovery &amp; Architecture (Weeks 1–2)
+    1.1 Finalize UX wireframes &amp; WCAG AA design tokens       [Owner: UX Lead]
+    1.2 Define REST API schemas &amp; mock endpoints            [Owner: Backend Lead]
+    1.3 Draft Master Test Plan &amp; CI pipeline skeleton       [Owner: QA Lead]
+
+2.0 Core Feature Build &amp; In-Sprint Automation (Weeks 3–6)
+    2.1 Implement authentication &amp; role-based access        [Owner: Backend/Frontend]
+    2.2 Build Playwright/Selenium automated regression suite [Owner: SDET]
+    2.3 Execute continuous API &amp; accessibility checks       [Owner: QA Team]
+
+3.0 Hardening, UAT &amp; Production Cutover (Weeks 7–8)
+    3.1 Performance load testing &amp; security remediation     [Owner: QA + DevOps]
+    3.2 User Acceptance Testing (UAT) sign-off              [Owner: Product Owner]
+    3.3 Production deployment &amp; post-release smoke check    [Owner: Release Manager]</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. Clarifying Ownership with a RACI Matrix</h2>
+      <div class="card">
+        <p>In cross-functional teams (developers, designers, QA analysts, DevOps), missed handoffs happen when ownership is ambiguous. A <strong>RACI Matrix</strong> assigns one clear role per activity: <strong>R</strong>esponsible (does the work), <strong>A</strong>ccountable (final sign-off—only one per row), <strong>C</strong>onsulted (provides input), <strong>I</strong>nformed (updated on progress).</p>
+        <pre><code>| Project Deliverable / Gate         | Product Owner | Dev Lead | QA / Test Lead | DevOps |
+|------------------------------------|---------------|----------|----------------|--------|
+| Acceptance Criteria Sign-Off       | A / R         | C        | C              | I      |
+| Feature Code &amp; Unit Tests          | I             | A / R    | C              | I      |
+| Test Plan &amp; Regression Sign-Off    | C             | C        | A / R          | I      |
+| Staging Environment &amp; CI Pipelines | I             | C        | C              | A / R  |
+| Production Go / No-Go Decision     | A             | C        | R (QA Report)  | R      |</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Managing Project Risks with a RAID Log</h2>
+      <div class="card">
+        <p>Project managers maintain a lightweight <strong>RAID Log</strong> (<em>Risks, Assumptions, Issues, Dependencies</em>) and review top items weekly so surprises do not derail release dates:</p>
+        <pre><code>| ID   | Type       | Description                              | Impact | Owner    | Mitigation / Action Plan                       |
+|------|------------|------------------------------------------|--------|----------|------------------------------------------------|
+| R-01 | Risk       | Third-party payment API sandbox unstable | High   | Dev Lead | Build local wiremock stub for CI smoke tests   |
+| D-02 | Dependency | Single Sign-On (SSO) certs from IT Ops   | High   | PM       | Escalate ticket by Wednesday; use mock auth    |
+| I-03 | Issue      | Staging DB refreshed without seed users  | Medium | DevOps   | Automate post-deploy seed script in pipeline   |</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Sprint Execution &amp; Tracking Health Signals</h2>
+      <div class="card">
+        <p>Rather than micromanaging tasks, watch four early-warning indicators during sprint execution:</p>
+        <ul>
+          <li><strong>Work-in-Progress (WIP) Bottlenecks:</strong> If 8 stories sit in <em>"In Code Review"</em> or <em>"Ready for QA"</em> on Day 8 of a 10-day sprint, pause new feature starts and swarm on reviews and testing.</li>
+          <li><strong>Scope Creep:</strong> Log mid-sprint requirement additions explicitly; swap out an equal-sized unstarted story rather than silently overloading the team.</li>
+          <li><strong>Defect Arrival vs. Closure Trend:</strong> Near release hardening, daily closed defects should outpace newly opened defects; if open Sev-1/Sev-2 bugs continue rising, trigger an immediate triage review.</li>
+          <li><strong>Blameless Retrospectives:</strong> Convert every delivery friction point (late builds, unclear specs, flaky environments) into one concrete process owner and action item for the next sprint.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Stakeholder Communication Cadence</h2>
+      <div class="card">
+        <p>Tailor communication depth to each audience so engineers stay focused and sponsors stay informed:</p>
+        <ol class="tutorial-steps">
+          <li><strong>Daily Stand-Up (15 mins — Delivery Team):</strong> Focus on board movement from right to left (closest to Done first) and immediate blockers.</li>
+          <li><strong>Mid-Sprint Backlog Refinement (45 mins — PO, Dev, QA):</strong> Size upcoming stories, map external dependencies, and validate acceptance criteria.</li>
+          <li><strong>Weekly Stakeholder Pulse (Async Email / Dashboard — Sponsors):</strong> Share milestone RAG status (Green / Amber / Red), key wins, top risks, and decisions needed.</li>
+          <li><strong>Sprint Review &amp; Release Go/No-Go (End of Sprint):</strong> Demo working software alongside QA readiness metrics and open-risk sign-off.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
