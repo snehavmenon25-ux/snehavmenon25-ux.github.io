@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pretrained Models, LLMs, Tools, AI Agents &amp; Agentic AI Explained | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Complete Beginner Guide</span>
+        <span class="badge">Modern AI Architecture</span>
+        <span class="badge">Pretrained Models • LLMs • Tools • Agents • Agentic AI</span>
+      </div>
+      <h1>From Pretrained Models &amp; LLMs to AI Agents and Agentic AI</h1>
+      <p class="subtitle">A clear, layer-by-layer explanation of how modern AI systems evolve—from passive text-generating foundation models to tool-using AI agents and autonomous multi-step Agentic AI workflows.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. The 5 Building Layers (From Foundation to Autonomy)</h2>
+      <div class="card">
+        <p>Think of modern AI systems as five stacked layers, where each layer adds a new capability on top of the one below it:</p>
+        <ol class="tutorial-steps">
+          <li><strong>Pretrained Models:</strong> Any neural network (vision, audio, or text) already trained on a massive public dataset so you do not have to train from scratch. Example: A ResNet model pretrained on millions of photos, or a BERT encoder pretrained on Wikipedia.</li>
+          <li><strong>Large Language Models (LLMs):</strong> Massive Transformer-based pretrained models trained on billions of text and code tokens to understand instructions, reason over context, and generate language or code. <em>Limitation:</em> A standalone LLM is a "brain in a jar"—it can only output text and cannot check live databases or click buttons by itself.</li>
+          <li><strong>Tools (Function Calling):</strong> External functions, APIs, SQL queries, calculators, or browser scripts that an LLM is permitted to invoke when it needs live data or wants to take an action in the real world.</li>
+          <li><strong>AI Agents:</strong> A focused software system built around an LLM + Tools + Memory + a control loop (<em>Perceive &rarr; Reason &rarr; Act &rarr; Observe</em>) designed to complete a specific task. Example: A QA bug-triage agent that reads a stack trace, queries recent Git commits via a tool, and drafts a defect ticket.</li>
+          <li><strong>Agentic AI:</strong> A higher-level architectural capability and workflow behavior where one or more AI agents autonomously plan multi-step paths toward a broad goal, adapt when a step fails, coordinate across systems, and escalate to humans only when policy boundaries require approval.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. AI Agents vs. Agentic AI: What Is the Real Difference?</h2>
+      <div class="card">
+        <p>Developers often use both terms interchangeably, but they describe two different levels of scope—<strong>a component vs. an autonomous workflow behavior</strong>:</p>
+        <pre><code>| Dimension        | AI Agent (Task-Focused Actor)           | Agentic AI (Goal-Driven Workflow System)         |
+|------------------|-----------------------------------------|--------------------------------------------------|
+| Core Role        | Executes a specific assigned task       | Plans, sequences &amp; adapts an end-to-end outcome  |
+| Scope            | Single bounded workflow or toolset      | Multi-step, cross-system orchestration           |
+| When Things Fail | Reports error or retries single step    | Revises plan, tries alternate path, or escalates |
+| QA Example       | Generates Playwright script for 1 form  | Plans test coverage, runs suite, triages fails   |</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Simple Example: How an AI Agent Uses a Tool (Python)</h2>
+      <div class="card">
+        <p>Below is a minimal, self-contained Python demonstration of the core <strong>Reason &rarr; Call Tool &rarr; Observe &rarr; Answer</strong> loop without needing paid API keys, showing exactly what happens under the hood inside an AI agent:</p>
+        <pre><code># Minimal demonstration of an AI Agent loop with a Tool
+def check_staging_build_status(service_name: str) -&gt; str:
+    """Tool: Simulates querying a live CI/CD API."""
+    mock_ci_db = {
+        "checkout-service": "FAILED (Test_PaymentTimeout)",
+        "auth-service":     "PASSED (142/142 green)"
+    }
+    return mock_ci_db.get(service_name, "UNKNOWN_SERVICE")
+
+class SimpleQAAgent:
+    def __init__(self) -&gt; None:
+        self.tools = {"check_build": check_staging_build_status}
+
+    def run(self, user_goal: str) -&gt; str:
+        # Step 1: Reason — Decide which tool is needed based on the user goal
+        target = "checkout-service" if "checkout" in user_goal.lower() else "auth-service"
+        print(f"[Agent Thought] Need live CI status for '{target}'. Calling tool...")
+
+        # Step 2: Act — Execute the external tool
+        observation = self.tools["check_build"](target)
+        print(f"[Tool Observation] {observation}")
+
+        # Step 3: Respond — Synthesize final answer grounded in tool output
+        if "FAILED" in observation:
+            return f"Release blocked: {target} reported {observation}. Recommend investigating failure logs."
+        return f"Ready for release: {target} is {observation}."
+
+agent = SimpleQAAgent()
+print(agent.run("Can we deploy checkout-service to staging?"))</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Guardrails &amp; Testing Principles for Agentic Systems</h2>
+      <div class="card">
+        <p>Because Agentic AI systems can call APIs, modify records, and chain multiple decisions together, QA and AI engineers enforce four strict guardrails:</p>
+        <ul>
+          <li><strong>Least-Privilege Tool Permissions:</strong> Give agents read-only database/API tokens unless write access is explicitly required.</li>
+          <li><strong>Human-in-the-Loop Approvals:</strong> Require explicit human confirmation before high-impact actions (deploying to production, deleting records, or sending external emails).</li>
+          <li><strong>Max-Step &amp; Budget Caps:</strong> Limit agent reasoning loops (e.g., max 10 steps) so an unexpected error cannot trigger an infinite loop.</li>
+          <li><strong>Trajectory Evaluation:</strong> Test not only the final text answer, but also whether the agent selected the <em>right tool</em> with the <em>right arguments</em> along the way.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
