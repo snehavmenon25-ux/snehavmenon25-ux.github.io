@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End SmartBear TestComplete Guide | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">SmartBear TestComplete</span>
+        <span class="badge">Desktop & Web UI Automation</span>
+      </div>
+      <h1>End-to-End Guide: Desktop &amp; Web Automation with SmartBear TestComplete</h1>
+      <p class="subtitle">Learn how to structure a TestComplete project from scratch—covering TestedApps, Object Browser, Name Mapping, Keyword-to-Script conversion, dynamic synchronization, and data-driven testing.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. Core TestComplete Concepts for Beginners</h2>
+      <div class="card">
+        <p>Unlike browser-only tools, TestComplete automates Windows desktop applications (.NET, WPF, WinForms, Delphi), web browsers, and mobile apps in a single IDE. Four building blocks form every reliable suite:</p>
+        <ul>
+          <li><strong>Project Suite &amp; Project:</strong> A container holding your application configuration, object repository, test scripts, and execution logs.</li>
+          <li><strong>TestedApps:</strong> Registers the executable path or browser URL so tests can launch, close, or restart the application cleanly before each run.</li>
+          <li><strong>Object Browser &amp; Name Mapping:</strong> Inspects live UI controls and maps long hierarchy paths into clean aliases (e.g., <code>Aliases.OrdersApp.MainForm.SaveButton</code>).</li>
+          <li><strong>Keyword Tests vs. Script Units:</strong> Beginners often record a Keyword Test first, then convert or build modular routines in <strong>JavaScript</strong> or <strong>Python</strong> for loops, conditions, and reusable helper libraries.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Step-by-Step Project Setup</h2>
+      <div class="card">
+        <ol class="tutorial-steps">
+          <li>Open TestComplete and select <strong>File &rarr; New &rarr; New Project</strong>.</li>
+          <li>Name the project <code>OrderEntryAutomation</code>, choose <strong>Desktop</strong> (or <strong>Web</strong>), and select <strong>JavaScript</strong> or <strong>Python</strong> as your scripting language.</li>
+          <li>Right-click <strong>TestedApps</strong> in the Project Explorer &rarr; <strong>Add &rarr; New Item</strong>, and browse to your application executable (for example, SmartBear's sample <code>Orders.exe</code>) or configure your target web browser URL.</li>
+          <li>Open the <strong>Object Browser</strong> panel while your application is running to verify TestComplete recognizes internal control names (<code>WinFormsObject</code>, <code>WPFObject</code>, or web DOM elements).</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Understanding Name Mapping &amp; Aliases</h2>
+      <div class="card">
+        <p>Without Name Mapping, a raw object path looks brittle and hard to read:</p>
+        <pre><code>Sys.Process("Orders").WinFormsObject("MainForm").WinFormsObject("ToolStrip1").WinFormsObject("NewOrderBtn")</code></pre>
+        <p style="margin-top: 0.75rem;">With <strong>Name Mapping &amp; Aliases</strong>, you map stable identification properties (such as <code>WndClass</code>, <code>Name</code>, or <code>AutomationId</code>) and collapse intermediate layout panels into a clean alias:</p>
+        <pre><code>Aliases.Orders.MainForm.NewOrderBtn</code></pre>
+        <ul>
+          <li><strong>Best Practice:</strong> Avoid mapping volatile properties like window coordinates (<code>Left</code>, <code>Top</code>) or dynamic window titles containing timestamps.</li>
+          <li><strong>Wildcards:</strong> Use <code>*</code> in dynamic captions (e.g., <code>Order #* - Details</code>) so mapped objects remain valid across every test run.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Writing Modular Script Tests (JavaScript &amp; Python)</h2>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Option A: JavaScript Script Unit (<code>OrderTests.js</code>)</h3>
+        <span class="meta">Unit: OrderTests • Launch, Wait, Interact, Verify</span>
+        <p>Notice how <code>WaitAliasChild</code> prevents flaky timing errors when dialogs take a moment to open, and <code>aqObject.CheckProperty</code> logs structured pass/fail checkpoints.</p>
+        <pre><code>// Launch application cleanly via TestedApps
+function launchApp() {
+  if (Sys.WaitProcess("Orders", 1000).Exists) {
+    TestedApps.Orders.Close();
+  }
+  TestedApps.Orders.Run(1, true);
+}
+
+// Reusable helper function to create a customer order
+function createCustomerOrder(customerName, productName, quantity) {
+  let mainForm = Aliases.Orders.MainForm;
+  mainForm.MainMenu.Click("Orders|New order...");
+
+  // Wait up to 5 seconds for the modal dialog to appear
+  let orderDlg = Aliases.Orders.WaitAliasChild("OrderForm", 5000);
+  if (!orderDlg.Exists) {
+    Log.Error("Order dialog did not open within 5 seconds.");
+    return;
+  }
+
+  orderDlg.CustomerNameBox.SetText(customerName);
+  orderDlg.ProductCombo.ClickItem(productName);
+  orderDlg.QuantityBox.SetText(aqConvert.IntToStr(quantity));
+  orderDlg.OKButton.ClickButton();
+}
+
+// Main test routine
+function Test_CreateSingleOrder() {
+  launchApp();
+  createCustomerOrder("Sneha Menon", "FamilyAlbum", 3);
+
+  // Verify the new row appears in the grid
+  let ordersGrid = Aliases.Orders.MainForm.OrdersView;
+  aqObject.CheckProperty(ordersGrid, "wItemCount", cmpEqual, 1);
+  Log.Checkpoint("Order created and verified successfully.");
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Option B: Equivalent Python Script Unit (<code>order_tests.py</code>)</h3>
+        <span class="meta">Unit: order_tests • Same Aliases &amp; Checkpoints in Python</span>
+        <pre><code>def launch_app():
+    if Sys.WaitProcess("Orders", 1000).Exists:
+        TestedApps.Orders.Close()
+    TestedApps.Orders.Run(1, True)
+
+def create_customer_order(customer_name, product_name, quantity):
+    main_form = Aliases.Orders.MainForm
+    main_form.MainMenu.Click("Orders|New order...")
+
+    order_dlg = Aliases.Orders.WaitAliasChild("OrderForm", 5000)
+    if not order_dlg.Exists:
+        Log.Error("Order dialog did not open within 5 seconds.")
+        return
+
+    order_dlg.CustomerNameBox.SetText(customer_name)
+    order_dlg.ProductCombo.ClickItem(product_name)
+    order_dlg.QuantityBox.SetText(str(quantity))
+    order_dlg.OKButton.ClickButton()
+
+def test_create_single_order():
+    launch_app()
+    create_customer_order("Sneha Menon", "FamilyAlbum", 3)
+
+    orders_grid = Aliases.Orders.MainForm.OrdersView
+    aqObject.CheckProperty(orders_grid, "wItemCount", cmpEqual, 1)
+    Log.Checkpoint("Order created and verified successfully.")</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Data-Driven Testing with Excel or CSV (<code>DDT</code>)</h2>
+      <div class="card">
+        <p>Instead of duplicating test scripts for different inputs, use TestComplete's built-in <code>DDT</code> driver to loop through an Excel sheet or CSV file:</p>
+        <pre><code>function Test_DataDrivenOrders() {
+  launchApp();
+
+  // Open an Excel worksheet or CSV file
+  let driver = DDT.ExcelDriver("C:\\TestData\\OrdersData.xlsx", "Sheet1", true);
+
+  while (!driver.EOF()) {
+    let customer = driver.Value("CustomerName");
+    let product  = driver.Value("Product");
+    let qty      = driver.Value("Quantity");
+
+    Log.AppendFolder("Testing order for: " + customer);
+    createCustomerOrder(customer, product, qty);
+    Log.PopLogFolder();
+
+    driver.Next();
+  }
+
+  DDT.CloseDriver(driver.Name);
+}</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Beginner Troubleshooting Checklist</h2>
+      <div class="card">
+        <ul>
+          <li><strong>"Object Does Not Exist" error:</strong> Check if the window title or ID changed dynamically, or replace direct calls with <code>WaitAliasChild("ControlName", 5000)</code>.</li>
+          <li><strong>Script works locally but fails on CI agents:</strong> Ensure screen resolution and DPI scaling (100%) match across machines, and run via <strong>TestExecute</strong> with an active desktop session.</li>
+          <li><strong>Keep scripts modular:</strong> Put login, navigation, and cleanup routines in a shared <code>CommonUtils</code> script unit and import them with <code>//USEUNIT CommonUtils</code> (JavaScript) or <code>import common_utils</code> (Python).</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
