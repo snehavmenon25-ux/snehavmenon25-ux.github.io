@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Deep Learning Architectures: CNN, RNN, LSTM, Transformers &amp; Transfer Learning | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Practitioner</span>
+        <span class="badge">PyTorch &amp; Torchvision</span>
+        <span class="badge">CNN • RNN • LSTM • Transformers • Transfer Learning</span>
+      </div>
+      <h1>End-to-End Guide: Deep Learning Architectures &amp; Transfer Learning in PyTorch</h1>
+      <p class="subtitle">Understand when and how to build Convolutional Neural Networks (CNNs), Recurrent Neural Networks (RNNs), LSTMs, Transformers, and Transfer Learning pipelines—with runnable PyTorch architectures, tensor-shape walkthroughs, and training best practices.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. Choosing the Right Architecture for Your Data</h2>
+      <div class="card">
+        <p>Every deep learning architecture encodes a different assumption (inductive bias) about how data is structured:</p>
+        <ul>
+          <li><strong>Convolutional Neural Networks (CNNs):</strong> Best for spatial grid data such as 2D/3D images, medical scans, and spectrograms. Sliding filters detect local edges, textures, and shapes regardless of where they appear in the image.</li>
+          <li><strong>Recurrent Neural Networks (RNNs):</strong> Built for sequential or time-series data (log events, sensor streams, text). They pass a hidden state from one time step to the next, though vanilla RNNs struggle to remember long sequences due to vanishing gradients.</li>
+          <li><strong>Long Short-Term Memory (LSTM):</strong> An upgraded RNN using <em>forget</em>, <em>input</em>, and <em>output</em> gates plus a dedicated cell state to retain long-range dependencies across sequences.</li>
+          <li><strong>Transformers:</strong> Replace step-by-step recurrence with <strong>Self-Attention</strong>, allowing every token or image patch to attend directly to every other element in parallel. The backbone of modern NLP, multimodal AI, and Vision Transformers (ViT).</li>
+          <li><strong>Transfer Learning:</strong> Reusing weights pretrained on massive datasets (such as ImageNet or large text corpora) and fine-tuning the final layers on a smaller domain-specific dataset—typically cutting training time and improving accuracy when labeled data is scarce.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. Environment Setup</h2>
+      <div class="card">
+        <pre><code>mkdir dl-architectures-guide
+cd dl-architectures-guide
+
+python -m venv .venv
+# Windows: .venv\Scripts\activate  |  macOS/Linux: source .venv/bin/activate
+
+pip install torch torchvision transformers</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Convolutional Neural Networks (CNNs) for Images</h2>
+      <div class="card">
+        <p>A CNN progressively reduces spatial height and width via pooling or strided convolutions while increasing feature channel depth. Notice the tensor shape flow from <code>(Batch, 3, 64, 64)</code> down to class logits <code>(Batch, num_classes)</code>:</p>
+        <pre><code>import torch
+import torch.nn as nn
+
+class SimpleCNN(nn.Module):
+    def __init__(self, num_classes: int = 4) -&gt; None:
+        super().__init__()
+        self.features = nn.Sequential(
+            # Input: (B, 3, 64, 64) -&gt; Output: (B, 16, 32, 32)
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            # Input: (B, 16, 32, 32) -&gt; Output: (B, 32, 16, 16)
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+
+            # Global average pooling collapses (B, 32, 16, 16) -&gt; (B, 32, 1, 1)
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+        self.classifier = nn.Linear(32, num_classes)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        x = self.features(x)
+        x = torch.flatten(x, start_dim=1)  # (B, 32)
+        return self.classifier(x)          # (B, num_classes)
+
+# Quick shape verification
+cnn = SimpleCNN(num_classes=4)
+dummy_images = torch.randn(8, 3, 64, 64)
+print("CNN output shape:", cnn(dummy_images).shape)  # torch.Size([8, 4])</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Sequence Modeling: Vanilla RNN vs. LSTM</h2>
+      <div class="card">
+        <p>Both <code>nn.RNN</code> and <code>nn.LSTM</code> expect 3D tensors shaped <code>(Batch, Sequence_Length, Features)</code> when <code>batch_first=True</code>. Below is a side-by-side sequence classifier (e.g., classifying log sequences or time-series windows):</p>
+        <pre><code>import torch
+import torch.nn as nn
+
+class SequenceClassifier(nn.Module):
+    def __init__(self, input_dim: int, hidden_dim: int, num_classes: int, use_lstm: bool = True) -&gt; None:
+        super().__init__()
+        self.use_lstm = use_lstm
+        if use_lstm:
+            self.rnn = nn.LSTM(
+                input_size=input_dim,
+                hidden_size=hidden_dim,
+                num_layers=2,
+                batch_first=True,
+                dropout=0.2
+            )
+        else:
+            self.rnn = nn.RNN(
+                input_size=input_dim,
+                hidden_size=hidden_dim,
+                num_layers=2,
+                nonlinearity="tanh",
+                batch_first=True
+            )
+        self.fc = nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        if self.use_lstm:
+            # LSTM returns output sequence plus final (hidden_state, cell_state)
+            _, (h_n, _) = self.rnn(x)
+        else:
+            # Vanilla RNN returns output sequence plus final hidden_state
+            _, h_n = self.rnn(x)
+
+        # Take the final layer's hidden state: shape (Batch, hidden_dim)
+        last_hidden = h_n[-1]
+        return self.fc(last_hidden)
+
+# Example: Batch of 16 sequences, each 20 time steps long, 10 features per step
+seq_batch = torch.randn(16, 20, 10)
+rnn_model = SequenceClassifier(input_dim=10, hidden_dim=64, num_classes=2, use_lstm=False)
+lstm_model = SequenceClassifier(input_dim=10, hidden_dim=64, num_classes=2, use_lstm=True)
+
+print("RNN output shape: ", rnn_model(seq_batch).shape)   # torch.Size([16, 2])
+print("LSTM output shape:", lstm_model(seq_batch).shape)  # torch.Size([16, 2])</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Transformers &amp; Self-Attention from Scratch in PyTorch</h2>
+      <div class="card">
+        <p>Unlike RNNs, a Transformer processes all sequence tokens simultaneously using <strong>Multi-Head Self-Attention</strong>. Because attention itself has no built-in sense of token order, we add <strong>Positional Embeddings</strong> before passing tokens into <code>nn.TransformerEncoder</code>:</p>
+        <pre><code>import torch
+import torch.nn as nn
+
+class TransformerTextClassifier(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        d_model: int = 64,
+        nhead: int = 4,
+        num_layers: int = 2,
+        max_len: int = 128,
+        num_classes: int = 3
+    ) -&gt; None:
+        super().__init__()
+        self.token_emb = nn.Embedding(vocab_size, d_model)
+        self.pos_emb = nn.Embedding(max_len, d_model)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=d_model * 4,
+            dropout=0.1,
+            batch_first=True
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.classifier = nn.Linear(d_model, num_classes)
+
+    def forward(self, token_ids: torch.Tensor) -&gt; torch.Tensor:
+        batch_size, seq_len = token_ids.shape
+        positions = torch.arange(seq_len, device=token_ids.device).unsqueeze(0).expand(batch_size, seq_len)
+
+        x = self.token_emb(token_ids) + self.pos_emb(positions)
+        encoded = self.encoder(x)              # (Batch, Seq_Len, d_model)
+        pooled = encoded.mean(dim=1)           # Mean pool across sequence tokens
+        return self.classifier(pooled)         # (Batch, num_classes)
+
+# Example: Batch of 8 tokenized bug reports (length 32 tokens)
+sample_tokens = torch.randint(0, 5000, (8, 32))
+transformer_model = TransformerTextClassifier(vocab_size=5000, num_classes=3)
+print("Transformer output shape:", transformer_model(sample_tokens).shape)  # torch.Size([8, 3])</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+      <h2>6. Transfer Learning: Two-Stage Feature Extraction &amp; Fine-Tuning</h2>
+      <div class="card">
+        <p>In real-world projects, training a deep CNN or Transformer from scratch on a small dataset often overfits. Instead, use <strong>Transfer Learning</strong> in two disciplined stages:</p>
+        <ol class="tutorial-steps">
+          <li><strong>Stage 1 — Feature Extraction (Freeze Backbone):</strong> Load a pretrained model (e.g., <code>ResNet18</code>), freeze all backbone parameters (<code>requires_grad = False</code>), replace the final classification head to match your target classes, and train only the new head for a few epochs.</li>
+          <li><strong>Stage 2 — Fine-Tuning (Unfreeze Top Layers with Low Learning Rate):</strong> Unfreeze the upper backbone layers and train end to end with a much smaller learning rate (such as <code>1e-4</code>) so pretrained filters adapt gently without catastrophic forgetting.</li>
+        </ol>
+        <pre><code>import torch
+import torch.nn as nn
+from torchvision import models
+
+def build_transfer_resnet(num_classes: int = 2) -&gt; nn.Module:
+    # 1. Load pretrained ImageNet weights
+    weights = models.ResNet18_Weights.DEFAULT
+    model = models.resnet18(weights=weights)
+
+    # 2. Freeze all convolutional backbone layers
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # 3. Replace final fully connected layer (unfrozen by default)
+    in_features = model.fc.in_features
+    model.fc = nn.Sequential(
+        nn.Dropout(0.3),
+        nn.Linear(in_features, num_classes)
+    )
+    return model
+
+# Stage 1 Optimizer: updates ONLY model.fc parameters
+transfer_model = build_transfer_resnet(num_classes=2)
+optimizer_stage1 = torch.optim.Adam(transfer_model.fc.parameters(), lr=1e-3)
+
+# Stage 2 (Optional Fine-Tuning): unfreeze last residual block (layer4) with smaller LR
+for param in transfer_model.layer4.parameters():
+    param.requires_grad = True
+
+optimizer_stage2 = torch.optim.Adam([
+    {"params": transfer_model.layer4.parameters(), "lr": 1e-4},
+    {"params": transfer_model.fc.parameters(),     "lr": 5e-4}
+])
+
+print("Trainable parameters:", sum(p.numel() for p in transfer_model.parameters() if p.requires_grad))</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 7 -->
+    <section>
+      <h2>7. Practical Training Checklist for Deep Learning Beginners</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Sanity-Check on One Batch First:</strong> Before training on thousands of samples, verify your model can drive training loss near zero on a single mini-batch of 8–16 samples.</li>
+          <li><strong>Match Loss Functions to Output Activations:</strong> Use <code>nn.CrossEntropyLoss()</code> on raw multi-class logits (do not apply <code>Softmax</code> inside <code>forward()</code>), and <code>nn.BCEWithLogitsLoss()</code> for binary/multi-label logits.</li>
+          <li><strong>Switch Modes Properly:</strong> Always call <code>model.train()</code> before training epochs and <code>model.eval()</code> with <code>torch.no_grad()</code> during validation so Dropout and BatchNorm behave deterministically.</li>
+          <li><strong>Clip Gradients in RNNs/LSTMs:</strong> Add <code>torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)</code> before <code>optimizer.step()</code> to prevent exploding gradients on long sequences.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
