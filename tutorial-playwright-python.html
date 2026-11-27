@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Playwright with Python Guide | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">Python 3.10+</span>
+        <span class="badge">Playwright & PyTest</span>
+      </div>
+      <h1>End-to-End Guide: Web & API Automation with Playwright and Python</h1>
+      <p class="subtitle">From an empty folder to a structured Page Object Model suite with auto-waiting assertions, API stubbing, and HTML reports.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. Why Playwright for Modern UI & API Testing?</h2>
+      <div class="card">
+        <p>Traditional browser automation often fails intermittently because scripts click buttons before JavaScript finishes rendering them. Playwright solves this at the protocol level:</p>
+        <ul>
+          <li><strong>Auto-Waiting:</strong> Before clicking or typing, Playwright automatically verifies the element is attached to the DOM, visible, stable, and enabled.</li>
+          <li><strong>Isolated Browser Contexts:</strong> Every test gets a clean incognito-like session in milliseconds without launching a new browser process.</li>
+          <li><strong>Built-in Network Control:</strong> You can mock API failures, inspect network headers, and combine REST API setup with UI checks in one script.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Environment Setup (Step-by-Step)</h2>
+      <div class="card">
+        <p>Open your terminal (Command Prompt, PowerShell, or macOS/Linux Terminal) and run these commands one by one:</p>
+        <pre><code># 1. Create a clean project folder and enter it
+mkdir playwright-python-starter
+cd playwright-python-starter
+
+# 2. Create and activate a Python virtual environment
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+source .venv/bin/activate
+
+# 3. Install PyTest, the official Playwright plugin, and HTML reporting
+pip install pytest pytest-playwright pytest-html
+
+# 4. Download Chromium, Firefox, and WebKit browser binaries
+playwright install</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Recommended Folder Structure</h2>
+      <div class="card">
+        <p>Even in a beginner project, separating element locators from test assertions prevents maintenance headaches later. Create this layout:</p>
+        <pre><code>playwright-python-starter/
+├── pages/
+│   └── todo_page.py        # Locators and page actions (Page Object)
+├── tests/
+│   └── test_todo_app.py    # Test scenarios and assertions
+└── pytest.ini              # Default PyTest configuration</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Step-by-Step Implementation</h2>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step A: Configure PyTest Defaults (<code>pytest.ini</code>)</h3>
+        <span class="meta">File: pytest.ini</span>
+        <p>This tells PyTest where your tests live and sets Chromium as the default browser.</p>
+        <pre><code>[pytest]
+testpaths = tests
+addopts = --browser chromium --headed -v</code></pre>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step B: Build the Page Object (<code>pages/todo_page.py</code>)</h3>
+        <span class="meta">File: pages/todo_page.py</span>
+        <p>Notice that we use user-facing locators (<code>get_by_placeholder</code>, <code>get_by_role</code>) instead of fragile CSS paths, and we keep assertions out of this file.</p>
+        <pre><code>from playwright.sync_api import Page, Locator
+
+class TodoPage:
+    URL = "https://demo.playwright.dev/todomvc/#/"
+
+    def __init__(self, page: Page) -&gt; None:
+        self.page = page
+        self.new_todo_input: Locator = page.get_by_placeholder("What needs to be done?")
+        self.todo_items: Locator = page.get_by_test_id("todo-item")
+
+    def open(self) -&gt; None:
+        self.page.goto(self.URL)
+
+    def add_task(self, task_text: str) -&gt; None:
+        self.new_todo_input.fill(task_text)
+        self.new_todo_input.press("Enter")
+
+    def toggle_task(self, index: int) -&gt; None:
+        self.todo_items.nth(index).get_by_role("checkbox").check()
+
+    def filter_by(self, status: str) -&gt; None:
+        # status can be "All", "Active", or "Completed"
+        self.page.get_by_role("link", name=status).click()</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Step C: Write the End-to-End Tests (<code>tests/test_todo_app.py</code>)</h3>
+        <span class="meta">File: tests/test_todo_app.py</span>
+        <p>Playwright provides <code>expect(...)</code> assertions that automatically retry until the condition passes or times out—eliminating manual <code>time.sleep()</code> calls.</p>
+        <pre><code>from playwright.sync_api import Page, expect
+from pages.todo_page import TodoPage
+
+def test_add_and_complete_tasks(page: Page) -&gt; None:
+    todo = TodoPage(page)
+    todo.open()
+
+    # 1. Add two tasks
+    todo.add_task("Write Playwright Page Object")
+    todo.add_task("Configure CI pipeline")
+    expect(todo.todo_items).to_have_count(2)
+
+    # 2. Mark the first task as completed
+    todo.toggle_task(0)
+    expect(todo.todo_items.nth(0)).to_have_class("completed")
+
+    # 3. Filter by Active tasks and verify only 1 remains visible
+    todo.filter_by("Active")
+    expect(todo.todo_items).to_have_count(1)
+    expect(todo.todo_items.first).to_have_text("Configure CI pipeline")
+
+def test_network_route_interception(page: Page) -&gt; None:
+    # Example: Block image requests to speed up test execution
+    page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+    todo = TodoPage(page)
+    todo.open()
+    expect(todo.new_todo_input).to_be_visible()</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Running Tests & Debugging Failures</h2>
+      <div class="card">
+        <pre><code># Run tests headless (fast mode for CI/CD) and generate an HTML report
+pytest --headed=false --html=report.html --self-contained-html
+
+# Record full DOM snapshots, network logs, and screenshots on failure
+pytest --tracing=retain-on-failure
+
+# Open a saved trace file visually
+playwright show-trace test-results/your-test-folder/trace.zip</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Common Beginner Mistakes to Avoid</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Using <code>time.sleep(5)</code>:</strong> Always use web-first assertions like <code>expect(locator).to_be_visible()</code> so tests finish as soon as the UI is ready.</li>
+          <li><strong>Chaining brittle XPaths:</strong> Prefer <code>get_by_role()</code>, <code>get_by_label()</code>, or <code>get_by_test_id()</code> so layout tweaks do not break your suite.</li>
+          <li><strong>Sharing state across tests:</strong> Let PyTest's built-in <code>page</code> fixture give every test function a fresh browser context automatically.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
