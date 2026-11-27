@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End CI/CD for QA: Jenkins &amp; Azure DevOps Pipelines | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">Jenkins Declarative Pipeline</span>
+        <span class="badge">Azure DevOps YAML Build &amp; Release</span>
+      </div>
+      <h1>End-to-End Guide: CI/CD Test Automation with Jenkins &amp; Azure DevOps</h1>
+      <p class="subtitle">Automate your Selenium C# and Playwright Python test suites on every commit—covering Jenkinsfiles, Azure DevOps multi-stage Build &amp; Release pipelines, secrets management, and test report publishing.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. How CI/CD Fits Into Automated Quality Engineering</h2>
+      <div class="card">
+        <p>Running automation scripts manually on a local laptop catches defects too late. A Continuous Integration / Continuous Delivery (CI/CD) pipeline splits quality gates into two automated stages:</p>
+        <ul>
+          <li><strong>Build / CI Pipeline (On Every Pull Request or Commit):</strong> Restores dependencies, compiles the application or test project, runs fast headless smoke tests, and blocks merges if critical tests fail.</li>
+          <li><strong>Release / CD Pipeline (On Staging / QA Deployment):</strong> Deploys the build artifact to a staging environment, injects environment-specific URLs and secrets, executes full UI/API regression suites, and publishes HTML/TRX/JUnit reports.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Part A — Jenkins Declarative Pipeline (<code>Jenkinsfile</code>)</h2>
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step 1: Recommended Jenkins Plugins</h3>
+        <p>Before creating your pipeline job in Jenkins (<strong>Manage Jenkins &rarr; Plugins</strong>), confirm these standard plugins are installed:</p>
+        <ul>
+          <li><strong>Pipeline:</strong> Enables declarative <code>Jenkinsfile</code> workflows stored directly in Git.</li>
+          <li><strong>Git / GitHub Integration:</strong> Triggers builds automatically via webhooks on push or pull request.</li>
+          <li><strong>JUnit &amp; HTML Publisher:</strong> Displays pass/fail trends and attaches Playwright HTML reports or screenshots to each build.</li>
+          <li><strong>Credentials Binding:</strong> Injects passwords and API keys safely without hardcoding them in Git.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step 2: Complete <code>Jenkinsfile</code> for Playwright (Python) &amp; Selenium (.NET)</h3>
+        <span class="meta">File: Jenkinsfile (Place in the root of your repository)</span>
+        <p>This declarative pipeline runs headless browser tests, archives failure traces/screenshots even when a test fails (<code>post { always { ... } }</code>), and publishes structured results.</p>
+        <pre><code>pipeline {
+    agent any
+
+    environment {
+        // Non-sensitive defaults; secrets come from Jenkins Credentials Store
+        BASE_URL = 'https://demo.playwright.dev/todomvc/#/'
+        CI       = 'true'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup Python &amp; Playwright') {
+            steps {
+                sh '''
+                    python3 -m venv .venv
+                    . .venv/bin/activate
+                    pip install --upgrade pip
+                    pip install pytest pytest-playwright pytest-html
+                    playwright install chromium
+                '''
+            }
+        }
+
+        stage('Run Automated Smoke &amp; Regression Tests') {
+            steps {
+                withCredentials([string(credentialsId: 'qa-test-token', variable: 'API_TOKEN')]) {
+                    sh '''
+                        . .venv/bin/activate
+                        pytest --headed=false \
+                               --junitxml=reports/junit-results.xml \
+                               --html=reports/playwright-report.html \
+                               --self-contained-html \
+                               --tracing=retain-on-failure
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Publish JUnit XML so Jenkins tracks test pass/fail trends over time
+            junit allowEmptyResults: true, testResults: 'reports/junit-results.xml'
+
+            // Archive HTML reports and Playwright failure traces as downloadable build artifacts
+            archiveArtifacts artifacts: 'reports/**, test-results/**', allowEmptyArchive: true
+        }
+    }
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Step 3: Creating the Job in Jenkins</h3>
+        <ol class="tutorial-steps">
+          <li>Click <strong>New Item</strong> &rarr; enter <code>QA-Regression-Pipeline</code> &rarr; select <strong>Pipeline</strong> &rarr; click <strong>OK</strong>.</li>
+          <li>Under <strong>Triggers</strong>, check <strong>GitHub hook trigger for GITScm polling</strong> (or schedule nightly runs with <code>H 2 * * *</code> under <em>Build periodically</em>).</li>
+          <li>Under <strong>Pipeline &rarr; Definition</strong>, choose <strong>Pipeline script from SCM</strong>, select <strong>Git</strong>, paste your repository URL, and set Script Path to <code>Jenkinsfile</code>.</li>
+          <li>Click <strong>Save</strong> and press <strong>Build Now</strong> to verify all three stages turn green.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Part B — Azure DevOps Build &amp; Release YAML Pipeline</h2>
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Modern Multi-Stage YAML vs. Classic Build &amp; Release</h3>
+        <p>In Azure DevOps, you can configure Classic UI Build/Release pipelines or combine both into a single version-controlled <strong><code>azure-pipelines.yml</code></strong> file with separate <code>Build_And_Smoke</code> and <code>Deploy_And_Regression_Release</code> stages.</p>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Complete Multi-Stage <code>azure-pipelines.yml</code> (Selenium C# + NUnit/MSTest)</h3>
+        <span class="meta">File: azure-pipelines.yml (Place in the root of your .NET repository)</span>
+        <p>Notice how Stage 1 compiles the .NET solution and publishes build artifacts, while Stage 2 (the Release gate) downloads those artifacts, runs headless Selenium tests against Staging, and uploads the Visual Studio <code>.trx</code> report into the Azure DevOps <strong>Tests</strong> tab.</p>
+        <pre><code>trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+stages:
+  # =========================================================
+  # STAGE 1: BUILD PIPELINE (Compile &amp; Publish Test Artifacts)
+  # =========================================================
+  - stage: Build_Stage
+    displayName: 'CI Build &amp; Package Tests'
+    jobs:
+      - job: BuildJob
+        displayName: 'Restore, Build &amp; Publish'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET 8 SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '8.0.x'
+
+          - script: dotnet restore WebAutomation.Tests/WebAutomation.Tests.csproj
+            displayName: 'Restore NuGet Packages'
+
+          - script: dotnet build WebAutomation.Tests/WebAutomation.Tests.csproj --configuration $(buildConfiguration) --no-restore
+            displayName: 'Build Test Project'
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Compiled Test Binaries'
+            inputs:
+              PathtoPublish: 'WebAutomation.Tests/bin/$(buildConfiguration)'
+              ArtifactName: 'qa-test-binaries'
+
+  # =========================================================
+  # STAGE 2: RELEASE PIPELINE (Staging QA Execution &amp; Report)
+  # =========================================================
+  - stage: Release_QA_Stage
+    displayName: 'Release Gate: Staging UI Regression'
+    dependsOn: Build_Stage
+    condition: succeeded()
+    jobs:
+      - deployment: RunStagingRegression
+        displayName: 'Execute Selenium Suite on Staging'
+        environment: 'QA-Staging'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: UseDotNet@2
+                  displayName: 'Install .NET 8 SDK'
+                  inputs:
+                    packageType: 'sdk'
+                    version: '8.0.x'
+
+                - script: |
+                    dotnet test WebAutomation.Tests/WebAutomation.Tests.csproj \
+                      --configuration $(buildConfiguration) \
+                      --logger "trx;LogFileName=StagingResults.trx" \
+                      --results-directory $(Agent.TempDirectory)/TestResults
+                  displayName: 'Run Headless Selenium Tests'
+                  env:
+                    TEST_ENV_URL: 'https://the-internet.herokuapp.com/login'
+                    # Map secret variable from Azure DevOps Library Variable Group
+                    TEST_USER_PASSWORD: $(StagingTestPassword)
+
+                - task: PublishTestResults@2
+                  displayName: 'Publish TRX Results to Azure DevOps'
+                  condition: always()
+                  inputs:
+                    testResultsFormat: 'VSTest'
+                    testResultsFiles: '**/*.trx'
+                    searchFolder: '$(Agent.TempDirectory)/TestResults'
+                    failTaskOnFailedTests: true</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Setting Up Secrets &amp; Approval Gates in Azure DevOps</h3>
+        <ol class="tutorial-steps">
+          <li><strong>Store Passwords Safely:</strong> Go to <strong>Pipelines &rarr; Library &rarr; + Variable group</strong>, add <code>StagingTestPassword</code>, and click the <strong>padlock icon</strong> to mark it as a secret.</li>
+          <li><strong>Add Pre-Deployment Approvals:</strong> Go to <strong>Pipelines &rarr; Environments &rarr; QA-Staging &rarr; Approvals and checks</strong> to require QA Lead sign-off before releasing to UAT or Production.</li>
+          <li><strong>Inspect Test Analytics:</strong> After a pipeline run completes, open the <strong>Tests</strong> tab on the summary page to inspect stack traces, duration trends, and flaky test history.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Common CI/CD Troubleshooting Checklist for QA Engineers</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Tests pass locally but fail in CI with "element not clickable":</strong> Linux CI agents default to small viewport resolutions (such as 800&times;600). Explicitly pass <code>--window-size=1920,1080</code> in ChromeOptions or viewport dimensions in Playwright.</li>
+          <li><strong>Pipeline stops before publishing reports when a test fails:</strong> By default, a failed <code>dotnet test</code> or <code>pytest</code> step aborts subsequent steps. Always add <code>condition: always()</code> in Azure DevOps or <code>post { always { ... } }</code> in Jenkins on report-publishing tasks.</li>
+          <li><strong>Browser version mismatch on self-hosted agents:</strong> Use Selenium 4's built-in <strong>Selenium Manager</strong> or run <code>playwright install</code> inside the pipeline so driver binaries always match the installed browser version.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
