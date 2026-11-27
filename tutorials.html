@@ -13,167 +13,87 @@
     <div class="hero">
       <h1>Software Testing & AI Tutorials</h1>
       <p>
-        Practical, code-first guides on modern test automation architecture (Selenium & Playwright), accessibility and performance engineering, and deep learning applied to software quality engineering.
+        Step-by-step, beginner-friendly walkthroughs covering full project setup, architecture patterns, runnable code, and debugging workflows across test automation and deep learning.
       </p>
     </div>
 
-    <!-- Track 1: Software Testing -->
+    <!-- Complete End-to-End Walkthroughs -->
     <section>
-      <h2>Software Testing & Automation Engineering</h2>
+      <h2>Complete End-to-End Beginner Walkthroughs</h2>
       <div class="grid-2">
         <article class="card">
-          <span class="category-pill cat-testing">Software Testing • Selenium</span>
-          <h3>Eliminating Flaky Selenium Tests with Explicit Waits</h3>
-          <span class="meta">Guide • C# / NUnit Synchronization Patterns</span>
-          <p>Replace brittle <code>Thread.Sleep</code> calls and mixed implicit/explicit waits with deterministic <code>WebDriverWait</code> conditions.</p>
-          <ol class="tutorial-steps">
-            <li>Keep implicit wait at <code>0</code> seconds to avoid unpredictable timeout multiplication.</li>
-            <li>Wrap dynamic element interactions in <code>WebDriverWait</code> using <code>SeleniumExtras.WaitHelpers</code>.</li>
-            <li>Anchor locators on stable <code>data-testid</code> or semantic attributes rather than positional XPaths.</li>
-          </ol>
-          <pre><code>// C# Selenium explicit wait helper
-var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-IWebElement submitBtn = wait.Until(
-    SeleniumExtras.WaitHelpers.ExpectedConditions.ElementToBeClickable(
-        By.CssSelector("[data-testid='submit-order']")));
-submitBtn.Click();</code></pre>
+          <span class="category-pill cat-testing">Full Walkthrough • Selenium C#</span>
+          <h3>Enterprise UI Automation with Selenium C#, NUnit &amp; MSTest</h3>
+          <span class="meta">5-Step Guide • .NET 8 CLI, Page Objects, Explicit Waits &amp; Both Runners</span>
+          <p>Create a complete C# Selenium automation solution from scratch, structure reusable Page Objects, eliminate flaky waits, and compare NUnit and MSTest suites side by side.</p>
+          <div style="margin-top: 1.1rem;">
+            <a href="tutorial-selenium-csharp.html" class="btn btn-primary">Read Full End-to-End Guide &rarr;</a>
+          </div>
         </article>
 
         <article class="card">
-          <span class="category-pill cat-testing">Software Testing • Playwright Python</span>
-          <h3>End-to-End UI & API Mocking with Playwright & PyTest</h3>
-          <span class="meta">Guide • Python Automation & Network Interception</span>
-          <p>Build fast, deterministic browser tests in Python using auto-waiting locators, web-first assertions, and <code>page.route</code> API stubbing.</p>
-          <ol class="tutorial-steps">
-            <li>Use role-based locators (<code>get_by_role</code>, <code>get_by_label</code>) that mirror user and screen-reader behavior.</li>
-            <li>Rely on <code>expect(locator).to_be_visible()</code> auto-retrying assertions instead of manual sleeps.</li>
-            <li>Intercept backend endpoints with <code>page.route()</code> to test edge-case HTTP 500 or empty states deterministically.</li>
-          </ol>
-          <pre><code># Python Playwright + PyTest with route interception
-from playwright.sync_api import Page, expect
-
-def test_handles_empty_search_results(page: Page):
-    page.route("**/api/items*", lambda route: route.fulfill(json={"items": []}))
-    page.goto("https://app.example.com/search")
-    page.get_by_role("button", name="Search").click()
-    expect(page.get_by_text("No matching records found")).to_be_visible()</code></pre>
+          <span class="category-pill cat-testing">Full Walkthrough • Playwright &amp; Python</span>
+          <h3>End-to-End Web &amp; API Automation with Playwright and Python</h3>
+          <span class="meta">6-Step Guide • Setup, Folder Structure, Page Objects &amp; PyTest</span>
+          <p>Start from an empty directory and build a complete Python Playwright test framework with auto-waiting assertions, network route interception, trace debugging, and HTML reports.</p>
+          <div style="margin-top: 1.1rem;">
+            <a href="tutorial-playwright-python.html" class="btn btn-primary">Read Full End-to-End Guide &rarr;</a>
+          </div>
         </article>
 
         <article class="card">
-          <span class="category-pill cat-testing">Software Testing • Architecture</span>
-          <h3>Structuring Maintainable Page Objects with SOLID Principles</h3>
-          <span class="meta">Guide • UI & API Automation Architecture</span>
-          <p>Separate locators, business workflows, and test assertions so UI changes stay isolated to a single class.</p>
-          <ol class="tutorial-steps">
-            <li>Keep page classes focused strictly on element interactions—avoid placing assertions inside Page Objects.</li>
-            <li>Inject API helpers for test data setup instead of clicking through slow UI preconditions.</li>
-            <li>Run suites in parallel inside CI/CD pipelines with trace-on-failure enabled.</li>
-          </ol>
-          <pre><code>// C# Playwright Page Object Pattern
-public class LoginPage(IPage page) {
-    private ILocator EmailInput => page.GetByLabel("Email");
-    private ILocator SubmitBtn  => page.GetByRole(AriaRole.Button, new() { Name = "Sign in" });
-
-    public async Task LoginAsync(string email) {
-        await EmailInput.FillAsync(email);
-        await SubmitBtn.ClickAsync();
-    }
-}</code></pre>
+          <span class="category-pill cat-testing">Full Walkthrough • SmartBear TestComplete</span>
+          <h3>Desktop &amp; Web UI Automation with SmartBear TestComplete</h3>
+          <span class="meta">6-Step Guide • TestedApps, Name Mapping, JS/Python &amp; DDT</span>
+          <p>Learn how to configure TestedApps, build resilient Name Mapping aliases, write modular JavaScript and Python test scripts, and run Excel data-driven loops.</p>
+          <div style="margin-top: 1.1rem;">
+            <a href="tutorial-testcomplete.html" class="btn btn-primary">Read Full End-to-End Guide &rarr;</a>
+          </div>
         </article>
 
+        <article class="card">
+          <span class="category-pill cat-ai">Full Walkthrough • Deep Learning for QA</span>
+          <h3>Building a Deep Learning Model for Test Case Prioritization</h3>
+          <span class="meta">Complete PyTorch Pipeline • Data Prep, Training, ROC-AUC &amp; Inference</span>
+          <p>Apply neural networks to software engineering by training a PyTorch classifier that predicts defect risk and ranks pull-request tests for faster CI feedback.</p>
+          <div style="margin-top: 1.1rem;">
+            <a href="tutorial-dl-test-prioritizer.html" class="btn btn-primary">Read Full End-to-End Guide &rarr;</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Quick Reference Patterns -->
+    <section>
+      <h2>Architecture &amp; Evaluation Reference Guides</h2>
+      <div class="grid-2">
         <article class="card">
           <span class="category-pill cat-testing">Software Testing • Accessibility</span>
           <h3>Automating WCAG AA/AAA Checks in CI/CD</h3>
-          <span class="meta">Guide • Inclusive Quality Engineering</span>
-          <p>Combine automated DOM scans with screen-reader verification (NVDA) to catch accessibility defects before release.</p>
-          <ol class="tutorial-steps">
-            <li>Integrate axe-core checks into your Playwright or Selenium regression suite.</li>
-            <li>Validate keyboard-only navigation, focus traps, and ARIA labels on dynamic modals.</li>
-            <li>Verify color contrast ratios and screen-reader announcements on critical user journeys.</li>
-          </ol>
-          <pre><code># Python Playwright + axe-core quick check
-from axe_playwright_python.sync_playwright import Axe
+          <span class="meta">Inclusive Quality Engineering</span>
+          <p>Combine automated DOM scans (<code>axe-core</code>) with screen-reader verification (NVDA) to catch accessibility defects before release.</p>
+          <pre><code>from axe_playwright_python.sync_playwright import Axe
 
 results = Axe().run(page)
 assert results.violations_count == 0, results.generate_report()</code></pre>
         </article>
 
         <article class="card">
-          <span class="category-pill cat-testing">Software Testing • API & Hybrid</span>
-          <h3>API + UI Hybrid Testing for Fast, Flake-Free Suites</h3>
-          <span class="meta">Guide • Test Pyramid Optimization</span>
-          <p>Eliminate repetitive UI login and data-seeding steps by authenticating via REST API and injecting session state directly into the browser.</p>
-          <ol class="tutorial-steps">
-            <li>Authenticate once via API request context and persist storage state to a JSON file.</li>
-            <li>Seed test records via POST endpoints and clean them up in teardown hooks.</li>
-            <li>Reserve UI assertions strictly for user-facing rendering and workflow validation.</li>
-          </ol>
-          <pre><code># Python Playwright API login + storage state reuse
-api = playwright.request.new_context(base_url="https://api.example.com")
-res = api.post("/auth/login", data={"user": "qa_lead", "pass": token})
-assert res.ok
-api.storage_state(path="auth_state.json")</code></pre>
-        </article>
-
-        <article class="card">
           <span class="category-pill cat-testing">Software Testing • Performance</span>
-          <h3>Designing JMeter Load & Latency Gates in CI/CD</h3>
-          <span class="meta">Guide • Non-Functional Quality Engineering</span>
-          <p>Shift performance testing left by running headless JMeter smoke-load suites and failing builds when P95 latency regresses.</p>
-          <ol class="tutorial-steps">
-            <li>Parameterize thread count, ramp-up time, and base URLs using JMeter properties (<code>-J</code> flags).</li>
-            <li>Run JMeter in non-GUI mode (<code>-n -t</code>) to prevent client-side memory bottlenecks.</li>
-            <li>Enforce automated pass/fail thresholds on P95 response time and HTTP error rates.</li>
-          </ol>
-          <pre><code># Headless JMeter execution with dynamic parameters
-jmeter -n -t checkout_load.jmx \
+          <h3>Designing JMeter Load &amp; Latency Gates in CI/CD</h3>
+          <span class="meta">Non-Functional Quality Engineering</span>
+          <p>Run headless JMeter smoke-load suites with parameterized thread properties and enforce P95 latency gates in CI pipelines.</p>
+          <pre><code>jmeter -n -t checkout_load.jmx \
   -Jthreads=50 -Jrampup=30 -Jhost=staging.example.com \
   -l results.jtl -e -o ./html-report</code></pre>
         </article>
-      </div>
-    </section>
-
-    <!-- Track 2: AI & ML Model Testing -->
-    <section>
-      <h2>AI/ML Engineering & Deep Learning for Software Testing</h2>
-      <div class="grid-2">
-        <article class="card">
-          <span class="category-pill cat-ai">Deep Learning for QA • PyTorch</span>
-          <h3>Neural Test Case Prioritization & Coverage Classification</h3>
-          <span class="meta">Guide • Deep Learning Applied to Test Engineering</span>
-          <p>Train a lightweight PyTorch neural network on requirement embeddings and code-churn features to classify high-risk test cases for CI smoke runs.</p>
-          <ol class="tutorial-steps">
-            <li>Encode requirement text (embeddings) alongside historical failure rate and changed-file metrics into a feature vector.</li>
-            <li>Train a two-layer feed-forward network with <code>BCEWithLogitsLoss</code> to score defect-detection likelihood.</li>
-            <li>Select top-ranked test cases dynamically per pull request to cut CI execution time while preserving fault detection.</li>
-          </ol>
-          <pre><code># PyTorch binary classifier for risk-based test selection
-import torch, torch.nn as nn
-
-class TestPrioritizerNet(nn.Module):
-    def __init__(self, in_features: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_features, 64), nn.ReLU(), nn.Dropout(0.2),
-            nn.Linear(64, 1)
-        )
-    def forward(self, x):
-        return self.net(x)</code></pre>
-        </article>
 
         <article class="card">
-          <span class="category-pill cat-ai">AI Testing • PyTest & PyTorch</span>
-          <h3>Writing Automated Behavioural & Drift Tests for ML Models</h3>
-          <span class="meta">Guide • Testing Beyond Accuracy</span>
-          <p>Why high aggregate validation accuracy can still hide critical failures—and how to write deterministic PyTest checks for neural networks.</p>
-          <ol class="tutorial-steps">
-            <li><strong>Invariance Tests:</strong> Verify predictions remain stable under minor noise or lighting shifts.</li>
-            <li><strong>Slice Evaluation:</strong> Measure precision/recall across underrepresented data subgroups.</li>
-            <li><strong>Inference Latency Gate:</strong> Fail the build if batch inference exceeds production SLA thresholds.</li>
-          </ol>
-          <pre><code>import torch, pytest
-
-def test_model_output_shape_and_bounds(trained_model):
+          <span class="category-pill cat-ai">AI Testing • PyTest &amp; PyTorch</span>
+          <h3>Writing Automated Behavioural &amp; Drift Tests for ML Models</h3>
+          <span class="meta">Testing Neural Networks Beyond Accuracy</span>
+          <p>Write deterministic PyTest checks for output probability bounds, subgroup slices, and batch inference latency thresholds.</p>
+          <pre><code>def test_model_output_shape_and_bounds(trained_model):
     sample = torch.randn(4, 3, 224, 224)
     probs = torch.softmax(trained_model(sample), dim=1)
     assert probs.shape == (4, 2)
@@ -182,55 +102,14 @@ def test_model_output_shape_and_bounds(trained_model):
 
         <article class="card">
           <span class="category-pill cat-ai">Responsible AI • Robustness</span>
-          <h3>Evaluating Adversarial Robustness & Explainability</h3>
-          <span class="meta">Guide • Trustworthy Deep Learning</span>
-          <p>A checklist for stress-testing deep learning classifiers and segmentation models against perturbations and spurious correlations.</p>
-          <ol class="tutorial-steps">
-            <li>Generate small-epsilon FGSM/PGD perturbations to measure worst-case confidence drops.</li>
-            <li>Use saliency or Grad-CAM overlays to confirm the model focuses on relevant regions rather than background artifacts.</li>
-            <li>Log all robustness metrics per run in MLflow for reproducible model governance.</li>
-          </ol>
-          <pre><code># Log robustness metrics in MLflow
-import mlflow
+          <h3>Evaluating Adversarial Robustness &amp; Explainability</h3>
+          <span class="meta">Trustworthy Deep Learning Governance</span>
+          <p>Stress-test classifiers and segmentation models against small-epsilon perturbations and log clean vs. perturbed metrics in MLflow.</p>
+          <pre><code>import mlflow
 
 with mlflow.start_run():
     mlflow.log_metric("clean_dice_score", 0.91)
     mlflow.log_metric("perturbed_dice_score", 0.84)</code></pre>
-        </article>
-
-        <article class="card">
-          <span class="category-pill cat-ai">Vision & Medical AI • Metrics</span>
-          <h3>Evaluating Segmentation Models Beyond Dice Score</h3>
-          <span class="meta">Guide • Boundary Precision & Failure Analysis</span>
-          <p>Global overlap scores can mask jagged contours or missed small lesions—pair region overlap with boundary distance metrics.</p>
-          <ol class="tutorial-steps">
-            <li>Combine Dice Similarity Coefficient (DSC) with 95th-percentile Hausdorff Distance (HD95) to penalize boundary outliers.</li>
-            <li>Stratify evaluation across small, medium, and large target volumes separately.</li>
-            <li>Export worst-decile error overlays automatically after every validation run for visual triage.</li>
-          </ol>
-          <pre><code># Computing region overlap alongside boundary error
-def dice_coefficient(pred_mask, true_mask, eps=1e-6):
-    inter = (pred_mask &amp; true_mask).sum()
-    return (2.0 * inter + eps) / (pred_mask.sum() + true_mask.sum() + eps)</code></pre>
-        </article>
-
-        <article class="card">
-          <span class="category-pill cat-ai">MLOps & Governance • Monitoring</span>
-          <h3>Detecting Data & Prediction Drift in Production ML</h3>
-          <span class="meta">Guide • Continuous Quality Assurance for AI</span>
-          <p>How to catch covariate shifts and silent accuracy degradation before ground-truth labels arrive in production.</p>
-          <ol class="tutorial-steps">
-            <li>Compute Population Stability Index (PSI) between training baselines and live feature distributions.</li>
-            <li>Monitor prediction entropy and confidence calibration shifts across rolling time windows.</li>
-            <li>Trigger automated alerts and shadow-model comparisons when PSI exceeds 0.20.</li>
-          </ol>
-          <pre><code># Population Stability Index (PSI) check
-import numpy as np
-
-def calculate_psi(expected_pct, actual_pct, eps=1e-6):
-    e = np.clip(expected_pct, eps, None)
-    a = np.clip(actual_pct, eps, None)
-    return float(np.sum((a - e) * np.log(a / e)))</code></pre>
         </article>
       </div>
     </section>
