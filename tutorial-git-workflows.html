@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Git Workflows &amp; Essential Commands for QA &amp; Engineering | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Team Lead</span>
+        <span class="badge">Git &amp; Pull Request Workflows</span>
+        <span class="badge">QA &amp; Automation Engineering</span>
+      </div>
+      <h1>End-to-End Guide: Git Workflows, Branching Strategies &amp; Essential Commands</h1>
+      <p class="subtitle">A practical handbook for SDETs, QA engineers, and developers—covering daily Git commands, Feature Branch &amp; Trunk-Based workflows, Pull Request hygiene, resolving merge conflicts, and safely undoing mistakes.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. Initial Setup &amp; Essential Configuration</h2>
+      <div class="card">
+        <p>Before cloning or committing to any repository, configure your identity, default branch name, and line-ending behavior so your commits stay clean across Windows, macOS, and Linux CI agents:</p>
+        <pre><code># 1. Set your name and email (attached to every commit)
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+# 2. Default to 'main' for newly initialized repositories
+git config --global init.defaultBranch main
+
+# 3. Prevent line-ending (CRLF vs LF) noise across Windows and Linux
+# On Windows:
+git config --global core.autocrlf true
+# On macOS / Linux:
+git config --global core.autocrlf input
+
+# 4. Verify your active configuration
+git config --list</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. How Git Tracks Changes (The 4 Areas)</h2>
+      <div class="card">
+        <p>Understanding where your files live avoids most beginner Git confusion:</p>
+        <ol class="tutorial-steps">
+          <li><strong>Working Directory:</strong> The actual files on your laptop that you edit in VS Code or Visual Studio.</li>
+          <li><strong>Staging Area (Index):</strong> The preview box (<code>git add</code>) where you select which changes belong in your next commit.</li>
+          <li><strong>Local Repository (<code>.git</code>):</strong> Your local commit history saved on disk via <code>git commit</code>.</li>
+          <li><strong>Remote Repository (GitHub / Azure Repos):</strong> The shared team server synced via <code>git fetch</code>, <code>git pull</code>, and <code>git push</code>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Daily Feature-Branch Workflow (Step-by-Step)</h2>
+      <div class="card">
+        <p>In team environments, engineers typically avoid committing directly to <code>main</code>. Instead, follow this repeatable feature-branch loop for every new test suite or bug fix:</p>
+        <pre><code># 1. Switch to main and pull the latest team changes
+git checkout main
+git pull origin main
+
+# 2. Create and switch to a descriptive feature branch
+git checkout -b feature/checkout-api-tests
+
+# 3. Check which files you modified or added
+git status
+git diff
+
+# 4. Stage specific files and commit with a clear, imperative message
+git add tests/test_checkout_api.py pages/checkout_page.py
+git commit -m "Add negative promo-code API tests for checkout flow"
+
+# 5. Push your branch to the remote repository and open a Pull Request
+git push -u origin feature/checkout-api-tests</code></pre>
+        <p style="margin-top: 0.75rem;"><strong>Pull Request Hygiene Tip:</strong> Keep PRs focused on one task (ideally under 300–400 changed lines), verify your <code>.gitignore</code> excludes <code>.venv/</code>, <code>bin/</code>, <code>obj/</code>, and <code>test-results/</code>, and confirm CI smoke checks pass before requesting review.</p>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Branching Strategies Compared</h2>
+      <div class="card">
+        <ul>
+          <li><strong>GitHub Flow (Feature Branch + PR):</strong> One long-lived <code>main</code> branch; every feature or test suite lives on a short-lived branch merged via Pull Request after CI checks pass. Best for continuous deployment and Agile QA teams.</li>
+          <li><strong>Trunk-Based Development:</strong> Engineers merge small, frequent commits into <code>main</code> daily (or via very short-lived branches lasting less than 24 hours), relying on feature flags and fast automated CI gates.</li>
+          <li><strong>GitFlow (Release / Hotfix Branches):</strong> Uses separate <code>develop</code>, <code>release/*</code>, and <code>hotfix/*</code> branches. Useful when supporting multiple scheduled enterprise software versions simultaneously.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Resolving Merge Conflicts &amp; Stashing Work</h2>
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Temporarily Shelving Uncommitted Changes (<code>git stash</code>)</h3>
+        <pre><code># Save unfinished edits so you can switch branches cleanly
+git stash push -m "WIP: payment timeout test"
+
+# Switch branches, inspect something, then return and restore your work
+git checkout main
+git checkout feature/checkout-api-tests
+git stash pop</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Syncing with <code>main</code> &amp; Resolving Conflicts</h3>
+        <pre><code># Bring latest main changes into your feature branch
+git checkout feature/checkout-api-tests
+git fetch origin
+git merge origin/main
+
+# If Git reports a CONFLICT in a file, open it and look for markers:
+# &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+#   your local branch code
+# =======
+#   incoming main branch code
+# &gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main
+
+# Edit the file to keep the valid combined code, remove the &lt;&lt;&lt;, ===, &gt;&gt;&gt; markers, then:
+git add path/to/resolved_file.py
+git commit -m "Resolve merge conflict with main in checkout tests"</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+      <h2>6. Safely Undoing Mistakes (Cheat Sheet)</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Discard unsaved edits in a single file:</strong> <code>git checkout -- path/to/file.py</code> (or <code>git restore path/to/file.py</code>)</li>
+          <li><strong>Unstage a file you accidentally ran <code>git add</code> on:</strong> <code>git restore --staged path/to/file.py</code></li>
+          <li><strong>Fix a typo in your most recent local commit message:</strong> <code>git commit --amend -m "Corrected commit message"</code> (use only before pushing to a shared branch)</li>
+          <li><strong>Safely undo a commit already pushed to <code>main</code>:</strong> <code>git revert &lt;commit-hash&gt;</code> — creates a new inverse commit without rewriting shared history.</li>
+          <li><strong>Inspect compact visual branch history:</strong> <code>git log --oneline --graph --decorate -n 15</code></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
