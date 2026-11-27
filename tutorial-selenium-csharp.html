@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Selenium C# with NUnit & MSTest | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">.NET 8 & C#</span>
+        <span class="badge">Selenium 4 • NUnit • MSTest</span>
+      </div>
+      <h1>End-to-End Guide: Enterprise UI Automation with Selenium C#, NUnit &amp; MSTest</h1>
+      <p class="subtitle">Build a clean, maintainable .NET test automation solution from scratch—covering NuGet setup, Page Object Model, explicit waits, and running tests in both NUnit and MSTest.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. How Selenium C#, NUnit, and MSTest Work Together</h2>
+      <div class="card">
+        <p>When building browser automation in .NET, two distinct layers work side by side:</p>
+        <ul>
+          <li><strong>Selenium WebDriver (<code>Selenium.WebDriver</code>):</strong> Controls the browser (Chrome, Edge, Firefox) via Selenium Manager, which automatically downloads matching browser drivers without manual path setup.</li>
+          <li><strong>Test Runner Framework (<code>NUnit</code> or <code>MSTest</code>):</strong> Discovers test methods, executes setup/teardown hooks, evaluates assertions, and generates TRX/XML reports for Azure DevOps or Jenkins pipelines.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Project Setup via .NET CLI (Step-by-Step)</h2>
+      <div class="card">
+        <p>Open a terminal and create a solution with a shared Page Object library (or start with an NUnit project and add MSTest support):</p>
+        <pre><code># 1. Create solution folder and NUnit test project
+mkdir SeleniumCSharpStarter
+cd SeleniumCSharpStarter
+dotnet new nunit -n WebAutomation.Tests
+cd WebAutomation.Tests
+
+# 2. Install Selenium WebDriver &amp; Support packages
+dotnet add package Selenium.WebDriver
+dotnet add package Selenium.Support
+dotnet add package DotNetSeleniumExtras.WaitHelpers
+
+# 3. (Optional) If your organization uses MSTest instead of NUnit:
+# dotnet new mstest -n WebAutomation.MSTests</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Clean Solution Folder Structure</h2>
+      <div class="card">
+        <pre><code>WebAutomation.Tests/
+├── Drivers/
+│   └── DriverFactory.cs         # Creates &amp; configures ChromeDriver (headless/headed)
+├── Pages/
+│   └── LoginPage.cs             # Locators, explicit waits, and user actions
+├── Tests/
+│   ├── LoginNUnitTests.cs       # Complete NUnit test suite
+│   └── LoginMsTestTests.cs      # Equivalent MSTest test suite
+└── WebAutomation.Tests.csproj</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Step-by-Step Code Implementation</h2>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step A: Browser Initialization Factory (<code>Drivers/DriverFactory.cs</code>)</h3>
+        <span class="meta">File: Drivers/DriverFactory.cs</span>
+        <p>Centralizing browser configuration makes it effortless to toggle headless execution inside CI/CD pipelines.</p>
+        <pre><code>using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+
+namespace WebAutomation.Tests.Drivers;
+
+public static class DriverFactory
+{
+    public static IWebDriver CreateChromeDriver(bool headless = false)
+    {
+        var options = new ChromeOptions();
+        options.AddArgument("--window-size=1920,1080");
+        if (headless)
+        {
+            options.AddArgument("--headless=new");
+        }
+
+        var driver = new ChromeDriver(options);
+        // Keep implicit wait at 0 so explicit WebDriverWait remains predictable
+        driver.Manage().Timeouts().ImplicitWait = TimeSpan.Zero;
+        return driver;
+    }
+}</code></pre>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step B: Page Object with Explicit Waits (<code>Pages/LoginPage.cs</code>)</h3>
+        <span class="meta">File: Pages/LoginPage.cs</span>
+        <p>Notice how the Page Object works identically regardless of whether you run tests with NUnit or MSTest.</p>
+        <pre><code>using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using SeleniumExtras.WaitHelpers;
+
+namespace WebAutomation.Tests.Pages;
+
+public class LoginPage
+{
+    private readonly IWebDriver _driver;
+    private readonly WebDriverWait _wait;
+
+    private readonly By _usernameInput = By.Id("username");
+    private readonly By _passwordInput = By.Id("password");
+    private readonly By _loginButton   = By.CssSelector("button[type='submit']");
+    private readonly By _flashBanner   = By.Id("flash");
+
+    public LoginPage(IWebDriver driver)
+    {
+        _driver = driver;
+        _wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+    }
+
+    public void Open() =&gt;
+        _driver.Navigate().GoToUrl("https://the-internet.herokuapp.com/login");
+
+    public void LoginAs(string username, string password)
+    {
+        _wait.Until(ExpectedConditions.ElementIsVisible(_usernameInput)).SendKeys(username);
+        _driver.FindElement(_passwordInput).SendKeys(password);
+        _wait.Until(ExpectedConditions.ElementToBeClickable(_loginButton)).Click();
+    }
+
+    public string GetBannerMessage() =&gt;
+        _wait.Until(ExpectedConditions.ElementIsVisible(_flashBanner)).Text;
+}</code></pre>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.25rem;">
+        <h3>Step C1: Writing the Test Suite in NUnit (<code>Tests/LoginNUnitTests.cs</code>)</h3>
+        <span class="meta">File: Tests/LoginNUnitTests.cs</span>
+        <pre><code>using NUnit.Framework;
+using OpenQA.Selenium;
+using WebAutomation.Tests.Drivers;
+using WebAutomation.Tests.Pages;
+
+namespace WebAutomation.Tests.Tests;
+
+[TestFixture]
+public class LoginNUnitTests
+{
+    private IWebDriver _driver = null!;
+    private LoginPage _loginPage = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _driver = DriverFactory.CreateChromeDriver(headless: false);
+        _loginPage = new LoginPage(_driver);
+    }
+
+    [Test]
+    public void ValidCredentials_ShouldDisplaySecureAreaBanner()
+    {
+        _loginPage.Open();
+        _loginPage.LoginAs("tomsmith", "SuperSecretPassword!");
+
+        StringAssert.Contains("You logged into a secure area!", _loginPage.GetBannerMessage());
+    }
+
+    [TestCase("wronguser", "SuperSecretPassword!")]
+    [TestCase("tomsmith", "wrongpass")]
+    public void InvalidCredentials_ShouldDisplayErrorBanner(string user, string pass)
+    {
+        _loginPage.Open();
+        _loginPage.LoginAs(user, pass);
+
+        StringAssert.Contains("invalid", _loginPage.GetBannerMessage());
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _driver.Quit();
+        _driver.Dispose();
+    }
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Step C2: Equivalent Test Suite in MSTest (<code>Tests/LoginMsTestTests.cs</code>)</h3>
+        <span class="meta">File: Tests/LoginMsTestTests.cs — Side-by-Side Syntax Comparison</span>
+        <p>If your team standardizes on Visual Studio's built-in <strong>MSTest</strong> framework, only the attributes and assertions change:</p>
+        <pre><code>using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OpenQA.Selenium;
+using WebAutomation.Tests.Drivers;
+using WebAutomation.Tests.Pages;
+
+namespace WebAutomation.Tests.Tests;
+
+[TestClass]
+public class LoginMsTestTests
+{
+    private IWebDriver _driver = null!;
+    private LoginPage _loginPage = null!;
+
+    [TestInitialize]
+    public void TestInitialize()
+    {
+        _driver = DriverFactory.CreateChromeDriver(headless: false);
+        _loginPage = new LoginPage(_driver);
+    }
+
+    [TestMethod]
+    public void ValidCredentials_ShouldDisplaySecureAreaBanner()
+    {
+        _loginPage.Open();
+        _loginPage.LoginAs("tomsmith", "SuperSecretPassword!");
+
+        Assert.IsTrue(_loginPage.GetBannerMessage().Contains("You logged into a secure area!"));
+    }
+
+    [DataTestMethod]
+    [DataRow("wronguser", "SuperSecretPassword!")]
+    [DataRow("tomsmith", "wrongpass")]
+    public void InvalidCredentials_ShouldDisplayErrorBanner(string user, string pass)
+    {
+        _loginPage.Open();
+        _loginPage.LoginAs(user, pass);
+
+        Assert.IsTrue(_loginPage.GetBannerMessage().Contains("invalid"));
+    }
+
+    [TestCleanup]
+    public void TestCleanup()
+    {
+        _driver.Quit();
+        _driver.Dispose();
+    }
+}</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Running Tests &amp; Generating CI Reports</h2>
+      <div class="card">
+        <pre><code># Run all tests from the command line
+dotnet test
+
+# Run tests and output a Visual Studio TRX report for Azure DevOps / Jenkins
+dotnet test --logger "trx;LogFileName=TestResults.trx"</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
