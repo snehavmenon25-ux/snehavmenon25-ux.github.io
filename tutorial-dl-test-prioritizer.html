@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Deep Learning for Software Testing | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">PyTorch & Scikit-Learn</span>
+        <span class="badge">AI for Software Testing</span>
+      </div>
+      <h1>End-to-End Guide: Building a Deep Learning Model for Test Case Prioritization</h1>
+      <p class="subtitle">Learn how to formulate a QA engineering problem as a neural network task—from feature preparation and PyTorch training to evaluation and CI/CD inference.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. The Software Testing Problem We Are Solving</h2>
+      <div class="card">
+        <p>In enterprise software systems, running an entire regression suite of thousands of UI and API tests on every pull request can take hours. Developers need fast feedback, which requires running the <strong>highest-risk test cases first</strong>.</p>
+        <p style="margin-top: 0.75rem;">We can train a binary classification neural network that looks at historical test metadata for a given code change and predicts the probability that a test case will uncover a defect (<code>1 = Likely to Fail / High Priority</code>, <code>0 = Low Risk</code>).</p>
+        <ul>
+          <li><strong>Input Features (4 signals per test case):</strong>
+            <ol class="tutorial-steps">
+              <li><code>lines_changed</code>: Number of modified lines in the module covered by the test.</li>
+              <li><code>past_failure_rate</code>: Historical failure ratio of this test across the last 50 builds (0.0 to 1.0).</li>
+              <li><code>days_since_last_run</code>: How stale the test execution is.</li>
+              <li><code>code_complexity</code>: Cyclomatic complexity score of the target component.</li>
+            </ol>
+          </li>
+          <li><strong>Target Label:</strong> <code>defect_found</code> (<code>1</code> if the test failed during regression, <code>0</code> if it passed).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Environment Setup</h2>
+      <div class="card">
+        <pre><code>mkdir dl-test-prioritizer
+cd dl-test-prioritizer
+
+python -m venv .venv
+# Windows: .venv\Scripts\activate  |  macOS/Linux: source .venv/bin/activate
+
+pip install torch scikit-learn numpy pandas</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Complete Runnable End-to-End Script (<code>train_prioritizer.py</code>)</h2>
+      <div class="card">
+        <span class="meta">File: train_prioritizer.py (Self-Contained — Runs on CPU in ~5 Seconds)</span>
+        <p>This script covers the full machine learning lifecycle: generating realistic QA build history data, splitting into train/test sets without data leakage, scaling features, defining a PyTorch neural network, training with Binary Cross-Entropy loss, evaluating Precision/Recall, and ranking new tests for a pull request.</p>
+        <pre><code>import numpy as np
+import torch
+import torch.nn as nn
+from torch.utils.data import TensorDataset, DataLoader
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, roc_auc_score
+
+# Set random seeds for reproducible experiments
+np.random.seed(42)
+torch.manual_seed(42)
+
+# ---------------------------------------------------------
+# STEP 1: Create a Realistic Synthetic QA Build Dataset
+# ---------------------------------------------------------
+num_samples = 1500
+lines_changed = np.random.randint(1, 300, size=num_samples)
+past_failure_rate = np.random.uniform(0.0, 0.6, size=num_samples)
+days_since_last_run = np.random.randint(0, 30, size=num_samples)
+code_complexity = np.random.randint(1, 25, size=num_samples)
+
+X = np.column_stack([
+    lines_changed,
+    past_failure_rate,
+    days_since_last_run,
+    code_complexity
+]).astype(np.float32)
+
+# Underlying risk rule + random noise (simulating real CI outcomes)
+risk_score = (
+    0.015 * lines_changed
+    + 4.5 * past_failure_rate
+    + 0.08 * days_since_last_run
+    + 0.12 * code_complexity
+    + np.random.normal(0, 0.8, size=num_samples)
+)
+y = (risk_score &gt; 6.0).astype(np.float32)
+
+# ---------------------------------------------------------
+# STEP 2: Train / Test Split & Feature Standardization
+# ---------------------------------------------------------
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# Fit scaler ONLY on training data to prevent data leakage
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+train_dataset = TensorDataset(
+    torch.tensor(X_train_scaled, dtype=torch.float32),
+    torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
+)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+# ---------------------------------------------------------
+# STEP 3: Define the PyTorch Neural Network Architecture
+# ---------------------------------------------------------
+class TestPrioritizerNet(nn.Module):
+    def __init__(self, input_dim: int) -&gt; None:
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1)  # Outputs raw logits
+        )
+
+    def forward(self, x: torch.Tensor) -&gt; torch.Tensor:
+        return self.layers(x)
+
+model = TestPrioritizerNet(input_dim=4)
+criterion = nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+
+# ---------------------------------------------------------
+# STEP 4: Training Loop
+# ---------------------------------------------------------
+epochs = 25
+for epoch in range(1, epochs + 1):
+    model.train()
+    epoch_loss = 0.0
+    for batch_x, batch_y in train_loader:
+        optimizer.zero_grad()               # 1. Clear old gradients
+        logits = model(batch_x)             # 2. Forward pass
+        loss = criterion(logits, batch_y)   # 3. Compute loss
+        loss.backward()                     # 4. Backpropagation
+        optimizer.step()                    # 5. Update weights
+        epoch_loss += loss.item()
+
+    if epoch % 5 == 0:
+        print(f"Epoch {epoch:02d}/{epochs} | Loss: {epoch_loss / len(train_loader):.4f}")
+
+# ---------------------------------------------------------
+# STEP 5: Model Evaluation (Beyond Raw Accuracy)
+# ---------------------------------------------------------
+model.eval()
+with torch.no_grad():
+    test_logits = model(torch.tensor(X_test_scaled, dtype=torch.float32))
+    test_probs = torch.sigmoid(test_logits).numpy().flatten()
+    test_preds = (test_probs &gt;= 0.5).astype(int)
+
+print("\n--- Validation Metrics ---")
+print(f"ROC-AUC Score: {roc_auc_score(y_test, test_probs):.4f}")
+print(classification_report(y_test, test_preds, target_names=["Low Risk", "High Risk"]))
+
+# ---------------------------------------------------------
+# STEP 6: Rank New Pull-Request Tests by Failure Probability
+# ---------------------------------------------------------
+candidate_tests = [
+    ("TC_01_Login_Smoke",      [12,  0.02, 1,  4]),
+    ("TC_02_Payment_Checkout", [185, 0.35, 14, 19]),
+    ("TC_03_Profile_Avatar",   [45,  0.05, 3,  7]),
+    ("TC_04_Order_Refund_API", [220, 0.42, 21, 22]),
+]
+
+features = np.array([item[1] for item in candidate_tests], dtype=np.float32)
+features_scaled = scaler.transform(features)
+
+with torch.no_grad():
+    scores = torch.sigmoid(
+        model(torch.tensor(features_scaled, dtype=torch.float32))
+    ).numpy().flatten()
+
+ranked = sorted(zip([c[0] for c in candidate_tests], scores), key=lambda x: x[1], reverse=True)
+print("--- Recommended CI Execution Order ---")
+for rank, (test_name, prob) in enumerate(ranked, start=1):
+    print(f"{rank}. {test_name:&lt;25} | Predicted Failure Risk: {prob:.2%}")</code></pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. How to Run & Interpret the Output</h2>
+      <div class="card">
+        <pre><code>python train_prioritizer.py</code></pre>
+        <p style="margin-top: 0.75rem;">When you run the script, pay attention to three key engineering details:</p>
+        <ul>
+          <li><strong>Why <code>StandardScaler</code> is fit only on <code>X_train</code>:</strong> Fitting on the full dataset leaks test-set mean and variance into training, inflating validation scores artificially.</li>
+          <li><strong>Why Recall on "High Risk" matters more than overall accuracy:</strong> In QA, missing a broken test (False Negative) lets a bug escape to production, whereas running one extra low-risk test (False Positive) only costs a few seconds of CI compute.</li>
+          <li><strong>Saving the trained model for CI use:</strong> Add <code>torch.save(model.state_dict(), "prioritizer.pt")</code> at the end of training so your CI pipeline can score tests in milliseconds without retraining.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
