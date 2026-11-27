@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End SQL Guide for Software Testing &amp; Data Verification | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Intermediate</span>
+        <span class="badge">PostgreSQL • SQL Server • MySQL</span>
+        <span class="badge">Backend &amp; Database Testing</span>
+      </div>
+      <h1>End-to-End Guide: SQL Essentials &amp; Database Verification for QA Engineers</h1>
+      <p class="subtitle">Learn SQL from scratch with a complete e-commerce practice schema—covering SELECT filtering, JOINs, aggregations, CTEs, window functions, constraints, and backend test assertions.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. Why SQL Is Essential in Software Testing</h2>
+      <div class="card">
+        <p>A green UI message like <em>"Order Placed Successfully"</em> only proves the frontend rendered a banner—not that the backend persisted the right totals, tax calculations, or inventory deductions. QA engineers use SQL to:</p>
+        <ul>
+          <li><strong>Verify Data Persistence:</strong> Confirm UI and REST API actions write accurate rows and timestamps to the database.</li>
+          <li><strong>Prepare &amp; Clean Up Test Data:</strong> Query valid test accounts (e.g., active users with zero pending orders) or reset test state cleanly.</li>
+          <li><strong>Validate Data Integrity &amp; Migrations:</strong> Catch duplicate records, orphaned foreign keys, null violations, and ETL transformation bugs.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. Practice Schema &amp; Sample Data (Run in Any SQL Sandbox)</h2>
+      <div class="card">
+        <p>You can run every query in this guide using SQLite, PostgreSQL, SQL Server, or an online sandbox like DB Fiddle by creating these two tables first:</p>
+        <pre><code>CREATE TABLE customers (
+    customer_id   INT PRIMARY KEY,
+    full_name     VARCHAR(100) NOT NULL,
+    email         VARCHAR(120) UNIQUE NOT NULL,
+    account_tier  VARCHAR(20)  DEFAULT 'Standard',
+    created_at    DATE         NOT NULL
+);
+
+CREATE TABLE orders (
+    order_id      INT PRIMARY KEY,
+    customer_id   INT NOT NULL,
+    order_status  VARCHAR(20)   NOT NULL,
+    total_amount  DECIMAL(10,2) NOT NULL,
+    order_date    DATE          NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+INSERT INTO customers VALUES
+(1, 'Aarav Nair',    'aarav@example.com',  'Premium',  '2025-01-10'),
+(2, 'Meera Pillai',  'meera@example.com',  'Standard', '2025-02-14'),
+(3, 'Rohan Verma',   'rohan@example.com',  'Premium',  '2025-03-01'),
+(4, 'Diya Krishnan', 'diya@example.com',   'Standard', '2025-04-20');
+
+INSERT INTO orders VALUES
+(101, 1, 'COMPLETED', 249.50, '2025-05-01'),
+(102, 1, 'COMPLETED',  89.00, '2025-05-12'),
+(103, 2, 'FAILED',    150.00, '2025-05-15'),
+(104, 3, 'COMPLETED', 520.00, '2025-05-18'),
+(105, 3, 'PENDING',    75.25, '2025-05-20');</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Core Querying: Filtering, Sorting &amp; Null Checks</h2>
+      <div class="card">
+        <p>Notice the logical execution order of a SQL query: <code>FROM &rarr; WHERE &rarr; GROUP BY &rarr; HAVING &rarr; SELECT &rarr; ORDER BY</code>.</p>
+        <pre><code>-- 1. Filter completed high-value orders and sort newest first
+SELECT order_id, customer_id, total_amount, order_date
+FROM orders
+WHERE order_status = 'COMPLETED'
+  AND total_amount &gt;= 100.00
+ORDER BY order_date DESC;
+
+-- 2. Pattern matching with LIKE and membership with IN
+SELECT customer_id, full_name, email
+FROM customers
+WHERE account_tier IN ('Premium', 'Enterprise')
+  AND email LIKE '%@example.com';
+
+-- 3. Checking for missing/NULL values (never use '= NULL')
+SELECT order_id
+FROM orders
+WHERE order_status IS NULL;</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Combining Tables with JOINs (INNER vs. LEFT JOIN)</h2>
+      <div class="card">
+        <p>Normalized databases split entities across multiple tables. Understanding <code>INNER JOIN</code> vs. <code>LEFT JOIN</code> is critical for finding missing records:</p>
+        <pre><code>-- INNER JOIN: Returns only customers who have placed at least one order
+SELECT c.full_name, c.account_tier, o.order_id, o.order_status, o.total_amount
+FROM customers c
+INNER JOIN orders o ON c.customer_id = o.customer_id;
+
+-- LEFT JOIN: Keeps ALL customers (even those with zero orders — Diya Krishnan)
+-- QA Pattern: Find customers who have NEVER placed an order (o.order_id IS NULL)
+SELECT c.customer_id, c.full_name, c.email
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Aggregations, GROUP BY, HAVING &amp; Data Quality Checks</h2>
+      <div class="card">
+        <p>Use <code>WHERE</code> to filter rows <em>before</em> grouping, and <code>HAVING</code> to filter aggregated groups <em>after</em> counting or summing:</p>
+        <pre><code>-- 1. Summarize total completed spend per customer (filtering groups &gt; 200)
+SELECT c.customer_id,
+       c.full_name,
+       COUNT(o.order_id)   AS completed_orders,
+       SUM(o.total_amount) AS total_spend
+FROM customers c
+INNER JOIN orders o ON c.customer_id = o.customer_id
+WHERE o.order_status = 'COMPLETED'
+GROUP BY c.customer_id, c.full_name
+HAVING SUM(o.total_amount) &gt; 200.00;
+
+-- 2. QA Integrity Check: Detect duplicate email addresses in customers table
+SELECT email, COUNT(*) AS duplicate_count
+FROM customers
+GROUP BY email
+HAVING COUNT(*) &gt; 1;
+
+-- 3. QA Integrity Check: Detect negative or zero order totals
+SELECT order_id, total_amount
+FROM orders
+WHERE total_amount &lt;= 0;</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+      <h2>6. Intermediate SQL: CTEs, Window Functions &amp; Safe Transactions</h2>
+      <div class="card">
+        <p><strong>Common Table Expressions (CTEs)</strong> make multi-step verification queries readable, while <strong>Window Functions</strong> (<code>ROW_NUMBER()</code>) let you inspect each customer's latest record without collapsing rows:</p>
+        <pre><code>-- 1. CTE + Window Function: Fetch each customer's most recent order
+WITH RankedOrders AS (
+    SELECT order_id,
+           customer_id,
+           order_status,
+           total_amount,
+           order_date,
+           ROW_NUMBER() OVER (
+               PARTITION BY customer_id
+               ORDER BY order_date DESC, order_id DESC
+           ) AS row_num
+    FROM orders
+)
+SELECT order_id, customer_id, order_status, total_amount, order_date
+FROM RankedOrders
+WHERE row_num = 1;
+
+-- 2. Safe Test Data Updates: Always wrap manual test-DB edits in a transaction
+BEGIN TRANSACTION;
+
+UPDATE orders
+SET order_status = 'COMPLETED'
+WHERE order_id = 105;
+
+-- Verify the exact row count before committing!
+SELECT * FROM orders WHERE order_id = 105;
+
+-- Run COMMIT; if accurate, or ROLLBACK; to undo immediately
+ROLLBACK;</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
