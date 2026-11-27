@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End-to-End Practical Test Planning Guide | Sneha V V</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <div class="hero">
+      <div class="badge-row">
+        <span class="badge">Beginner to Lead</span>
+        <span class="badge">IEEE 829 / ISO 29119-3</span>
+        <span class="badge">Sprint &amp; Release Planning</span>
+      </div>
+      <h1>End-to-End Guide: Practical Software Test Planning</h1>
+      <p class="subtitle">Learn how to turn a raw Product Requirements Document (PRD) or Epic into an actionable Test Plan—complete with scope boundaries, effort estimation, Requirement Traceability Matrices (RTM), environment checklists, and Go/No-Go criteria.</p>
+      <div class="cta-group">
+        <a href="tutorials.html" class="btn">&larr; Back to All Tutorials</a>
+      </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+      <h2>1. The 6-Step Test Planning Lifecycle</h2>
+      <div class="card">
+        <p>A Test Plan is a living operational contract between Product, Development, and QA. Before writing test cases or automation scripts, follow these six steps in order:</p>
+        <ol class="tutorial-steps">
+          <li><strong>Analyze Requirements &amp; Identify Test Basis:</strong> Review user stories, API contracts (OpenAPI/Swagger), wireframes, and non-functional SLAs to flag ambiguities early.</li>
+          <li><strong>Define Scope &amp; Exclusions:</strong> Explicitly state which modules, browsers, devices, and integrations are <em>In Scope</em> vs. <em>Out of Scope</em> so expectations stay aligned.</li>
+          <li><strong>Assess Risks &amp; Prioritize Test Depth:</strong> Rank features by business impact and technical complexity to decide where deep automation vs. smoke checks belong.</li>
+          <li><strong>Estimate Effort &amp; Build the Schedule:</strong> Break QA activities into test design, environment setup, automation scripting, execution, and bug retesting.</li>
+          <li><strong>Plan Test Environments, Tools &amp; Test Data:</strong> Confirm staging URLs, mock services, user roles, and synthetic test datasets exist before Day 1 of execution.</li>
+          <li><strong>Set Entry, Suspension &amp; Exit Criteria:</strong> Define objective gates for starting testing, pausing broken builds, and signing off for production.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2>2. Worked Example: Estimating QA Effort for a Release</h2>
+      <div class="card">
+        <p>Beginners often estimate only test execution time and forget test design, environment blockers, and defect retesting. Here is how to build a realistic bottom-up QA estimate for a 2-week sprint feature (<em>User Profile &amp; Two-Factor Authentication</em>):</p>
+        <pre><code>TASK BREAKDOWN &amp; EFFORT ESTIMATION (2 QA Engineers, 10-Day Sprint)
+
+1. Requirement Review &amp; Test Scenario Design
+   - 6 user stories × ~2.5 hrs (design + peer review)            = 15 hrs
+
+2. Test Data &amp; Environment Readiness
+   - Configure mock SMS/OTP gateway + seed 4 role accounts       =  6 hrs
+
+3. Automated Test Implementation (API + UI)
+   - 10 API contract/negative tests (Playwright/PyTest)          = 12 hrs
+   - 4 end-to-end UI journeys + WCAG AA accessibility checks     = 10 hrs
+
+4. Manual Exploratory &amp; Cross-Browser Execution
+   - Edge-case exploratory charters (expired OTP, rate limits)   =  8 hrs
+
+5. Defect Triage, Retesting &amp; Regression Buffer (~20%)
+   - Bug verification cycles + final release smoke sign-off      = 11 hrs
+-------------------------------------------------------------------------
+TOTAL ESTIMATED QA EFFORT                                        = 62 hrs</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+      <h2>3. Building a Requirement Traceability Matrix (RTM)</h2>
+      <div class="card">
+        <p>An RTM proves that every business requirement has corresponding test coverage and prevents high-risk gaps from slipping through undetected:</p>
+        <pre><code>| Req ID  | Feature / Acceptance Criterion       | Test Case IDs        | Automation Type | Priority | Status |
+|---------|--------------------------------------|----------------------|-----------------|----------|--------|
+| REQ-101 | Enable 2FA via authenticator app     | TC-01, TC-02, TC-03  | UI + API        | High     | Pass   |
+| REQ-102 | Reject invalid or expired 6-digit OTP| TC-04, TC-05         | API (PyTest)    | High     | Pass   |
+| REQ-103 | Lock account after 5 failed attempts | TC-06, TC-07         | API (PyTest)    | Critical | Pass   |
+| REQ-104 | Keyboard &amp; screen-reader 2FA modal   | TC-08                | axe-core + NVDA | Medium   | Pass   |</code></pre>
+      </div>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+      <h2>4. Entry, Suspension, Resumption &amp; Exit Criteria</h2>
+      <div class="card">
+        <p>Strong test plans protect the team from wasting hours testing unstable builds by defining four clear lifecycle gates:</p>
+        <ul>
+          <li><strong>Entry Criteria (Ready for QA):</strong> Feature code merged to staging branch, unit tests passing, API contracts documented, and automated smoke check green.</li>
+          <li><strong>Suspension Criteria (Pause Testing):</strong> Staging environment is down, authentication service is unreachable, or a Severity-1 blocker prevents access to core workflows.</li>
+          <li><strong>Resumption Criteria (Resume Testing):</strong> Hotfix build deployed to staging and smoke tests pass on the blocked workflow.</li>
+          <li><strong>Exit Criteria (Release Sign-Off):</strong> All critical/high test cases executed, zero open Severity-1/Severity-2 defects, regression pass rate meets target threshold, and QA Sign-Off report published.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+      <h2>5. Contingency Planning: What to Do When Scope or Timelines Slip</h2>
+      <div class="card">
+        <p>When development finishes two days late but the release date cannot move, a Test Manager uses structured trade-offs rather than cutting quality blindly:</p>
+        <ol class="tutorial-steps">
+          <li><strong>De-scope Low-Risk / Non-Critical Browsers:</strong> Focus full execution on primary supported browsers and high-risk payment/auth paths first.</li>
+          <li><strong>Parallelize Execution:</strong> Split automated suites across parallel CI workers and pair QA engineers on exploratory charters.</li>
+          <li><strong>Document Residual Risk Explicitly:</strong> If any medium/low tests are deferred, list them clearly in the Release Sign-Off email so Product and Engineering leadership make an informed Go/No-Go call.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="nav.js"></script>
+</body>
+</html>
